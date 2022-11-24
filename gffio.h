@@ -34,12 +34,15 @@ typedef struct {
 	char *line;
 } gio_comm_t;
 
+struct gio_dict_s;
+typedef struct gio_dict_s gio_dict_t;
+
 typedef struct {
 	int64_t n_feat, m_feat;
 	int64_t n_comm, m_comm;
 	gio_feat_t *feat;
 	gio_comm_t *comm;
-	void *h; // dictionary
+	gio_dict_t *dict;
 } gio_gff_t;
 
 #ifdef __cplusplus

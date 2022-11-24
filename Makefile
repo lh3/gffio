@@ -4,7 +4,7 @@ CFLAGS=		-std=c99 -g -Wall -O3
 CXXFLAGS=	$(CFLAGS)
 CPPFLAGS=
 INCLUDES=
-OBJS=		read.o
+OBJS=		dict.o read.o
 PROG=		gffio
 LIBS=		-lz
 
@@ -35,5 +35,6 @@ depend:
 
 # DO NOT DELETE
 
+dict.o: gio-priv.h gffio.h khashl.h
 main.o: gffio.h ketopt.h
-read.o: gffio.h kseq.h
+read.o: gio-priv.h gffio.h kseq.h

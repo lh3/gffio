@@ -21,6 +21,16 @@ gio_gff_t *gio_read_ks(kstream_t *ks)
 			GIO_CALLOC(p->line, str.l + 1);
 			memcpy(p->line, str.s, str.l + 1);
 		} else {
+			int32_t i;
+			char *p, *q;
+			for (p = q = str.s, i = 0;; ++p) {
+				if (*p == '\t' || *p == 0) {
+					if (i == 0) { // contig name
+					}
+					q = p + 1, ++i;
+					if (*p == 0) break;
+				}
+			}
 		}
 		++lineoff;
 	}
