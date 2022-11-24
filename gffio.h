@@ -40,4 +40,15 @@ typedef struct {
 	void *h; // dictionary
 } gio_gff_t;
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
+gio_gff_t *gio_read(const char *fn);
+void gio_destroy(gio_gff_t *gff);
+
+#ifdef __cplusplus
+}
+#endif
+
 #endif

@@ -9,7 +9,7 @@ gio_gff_t *gio_read_ks(kstream_t *ks)
 	gio_gff_t *gff = 0;
 	kstring_t str = {0,0,0};
 	int dret;
-	while (ks_getuntil2(ks, KS_SEP_LINE, &str, &dret, 0) >= 0) {
+	while (ks_getuntil(ks, KS_SEP_LINE, &str, &dret) >= 0) {
 	}
 	return gff;
 }
@@ -26,4 +26,8 @@ gio_gff_t *gio_read(const char *fn)
 	ks_destroy(ks);
 	gzclose(fp);
 	return gff;
+}
+
+void gio_destroy(gio_gff_t *gff)
+{
 }

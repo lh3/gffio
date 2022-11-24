@@ -31,6 +31,9 @@ clean:
 		rm -fr *.o a.out $(PROG) *~ *.a *.dSYM
 
 depend:
-		(LC_ALL=C; export LC_ALL; makedepend -Y -- $(CFLAGS) $(DFLAGS) -- *.c *.cpp)
+		(LC_ALL=C; export LC_ALL; makedepend -Y -- $(CFLAGS) $(DFLAGS) -- *.c)
 
 # DO NOT DELETE
+
+main.o: gffio.h ketopt.h
+read.o: gffio.h kseq.h
