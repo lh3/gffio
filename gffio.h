@@ -23,20 +23,22 @@ typedef struct gio_feat_s {
 	int32_t n_attr, m_attr;
 	int64_t start, end;
 	double score; 
-	int64_t lineno;
+	int64_t lineoff;
 	char *ctg, *src, *feat_ori, *id, *name;
 	gio_attr_t *attr;
 	struct gio_feat_s *child;
 } gio_feat_t;
 
 typedef struct {
-	int64_t lineno;
+	int64_t lineoff;
 	char *line;
-} gio_comment_t;
+} gio_comm_t;
 
 typedef struct {
 	int64_t n_feat, m_feat;
+	int64_t n_comm, m_comm;
 	gio_feat_t *feat;
+	gio_comm_t *comm;
 	void *h; // dictionary
 } gio_gff_t;
 

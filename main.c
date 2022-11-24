@@ -15,6 +15,7 @@ int main_view(int argc, char *argv[])
 		return 1;
 	}
 	gff = gio_read(argv[o.ind]);
+	gio_destroy(gff);
 	return 0;
 }
 
