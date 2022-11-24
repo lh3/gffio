@@ -4,9 +4,9 @@ CFLAGS=		-std=c99 -g -Wall -O3
 CXXFLAGS=	$(CFLAGS)
 CPPFLAGS=
 INCLUDES=
-OBJS=		dict.o read.o
+OBJS=		dict.o read.o format.o
 PROG=		gffio
-LIBS=		-lz
+LIBS=		-lz -lm
 
 ifneq ($(asan),)
 	CFLAGS+=-fsanitize=address
@@ -36,5 +36,6 @@ depend:
 # DO NOT DELETE
 
 dict.o: gio-priv.h gffio.h khashl.h
+format.o: gio-priv.h gffio.h
 main.o: gffio.h ketopt.h
 read.o: gio-priv.h gffio.h kseq.h

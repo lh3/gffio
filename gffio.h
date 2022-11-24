@@ -18,13 +18,13 @@ typedef struct {
 
 typedef struct gio_feat_s {
 	int32_t feat;
-	int32_t is_rev:16, frame:16;
+	int32_t strand:16, frame:16;
 	int32_t n_child, m_child;
 	int32_t n_attr, m_attr;
 	int64_t start, end;
 	double score; 
 	int64_t lineoff;
-	char *ctg, *src, *feat_ori, *id, *name;
+	const char *ctg, *src, *feat_ori, *id, *name;
 	gio_attr_t *attr;
 	struct gio_feat_s *child;
 } gio_feat_t;
@@ -51,6 +51,7 @@ extern "C" {
 
 gio_gff_t *gio_read(const char *fn);
 void gio_destroy(gio_gff_t *gff);
+void gio_write(const char *fn, const gio_gff_t *gff);
 
 #ifdef __cplusplus
 }

@@ -27,7 +27,7 @@ char *gio_strdup(const char *src)
 	return dst;
 }
 
-int32_t gio_dict_put(gio_dict_t *d, const char *s)
+const char *gio_dict_put(gio_dict_t *d, const char *s)
 {
 	int absent;
 	khint_t k;
@@ -38,14 +38,14 @@ int32_t gio_dict_put(gio_dict_t *d, const char *s)
 		kh_key(d->h, k) = d->str[d->n_str] = gio_strdup(s);
 		kh_val(d->h, k) = d->n_str++;
 	}
-	return kh_val(d->h, k);
+	return kh_key(d->h, k);
 }
 
-int32_t gio_dict_get(const gio_dict_t *d, const char *s)
+const char *gio_dict_get(const gio_dict_t *d, const char *s)
 {
 	khint_t k;
 	k = gio_sh_get(d->h, s);
-	return k == kh_end(d->h)? -1 : kh_val(d->h, k);
+	return k == kh_end(d->h)? 0 : kh_key(d->h, k);
 }
 
 void gio_dict_destroy(gio_dict_t *d)
