@@ -23,14 +23,14 @@ typedef struct {
 typedef struct gio_feat_s {
 	int32_t feat;
 	int32_t strand:16, frame:16;
-	int32_t n_child, m_child;
+	int32_t n_child, n_parent;
 	int32_t n_attr, m_attr;
 	int64_t st, en;
 	double score; 
 	int64_t lineoff;
 	const char *ctg, *src, *feat_ori, *id, *name;
 	gio_attr_t *attr;
-	struct gio_feat_s *child;
+	struct gio_feat_s **child, **parent;
 } gio_feat_t;
 
 typedef struct {
@@ -44,7 +44,7 @@ typedef struct gio_dict_s gio_dict_t;
 typedef struct {
 	int64_t n_feat, m_feat;
 	int64_t n_comm, m_comm;
-	gio_feat_t *feat;
+	gio_feat_t *feat, **feat_view;
 	gio_comm_t *comm;
 	gio_dict_t *dict;
 } gio_gff_t;

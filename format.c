@@ -117,7 +117,7 @@ void gio_write_gff_stream(FILE *fp, const gio_gff_t *gff, int32_t fmt)
 	kstring_t str = {0,0,0};
 	write_comment(fp, gff, &str);
 	for (i = 0; i < gff->n_feat; ++i) {
-		write_feat(&str, gff, &gff->feat[i], fmt);
+		write_feat(&str, gff, gff->feat_view? gff->feat_view[i] : &gff->feat[i], fmt);
 		fwrite(str.s, 1, str.l, fp);
 	}
 	free(str.s);

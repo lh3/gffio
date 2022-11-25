@@ -4,7 +4,7 @@ CFLAGS=		-std=c99 -g -Wall -O3
 CXXFLAGS=	$(CFLAGS)
 CPPFLAGS=
 INCLUDES=
-OBJS=		dict.o read.o format.o
+OBJS=		dict.o util.o read.o format.o
 PROG=		gffio
 LIBS=		-lz -lm
 

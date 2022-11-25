@@ -30,13 +30,7 @@ static void gio_parse_attr(gio_gff_t *g, gio_feat_t *f, char *str)
 		}
 		*p = 0;
 		q = p + 1;
-		if (key != 0 && val != 0) {
-			if (f->n_attr == f->m_attr)
-				GIO_EXPAND(f->attr, f->m_attr);
-			f->attr[f->n_attr].key = gio_dict_put(g->dict, key);
-			f->attr[f->n_attr].val = gio_dict_put(g->dict, val);
-			f->n_attr++;
-		}
+		gio_attr_append(g, f, key, val);
 	}
 }
 
@@ -45,8 +39,11 @@ static void gio_parse_feat(gio_gff_t *gff, char *str)
 	int32_t i;
 	char *p, *q;
 	gio_feat_t *f;
-	if (gff->n_feat == gff->m_feat)
+	if (gff->n_feat == gff->m_feat) {
+		int32_t oldm = gff->m_feat;
 		GIO_EXPAND(gff->feat, gff->m_feat);
+		memset(&gff->feat[oldm], 0, sizeof(gio_feat_t) * (gff->m_feat - oldm));
+	}
 	f = &gff->feat[gff->n_feat++];
 	for (p = q = str, i = 0;; ++p) {
 		if (*p == '\t' || *p == 0) {
@@ -100,6 +97,7 @@ gio_gff_t *gio_read_ks(kstream_t *ks)
 		}
 		++lineoff;
 	}
+	gio_label(gff);
 	return gff;
 }
 
