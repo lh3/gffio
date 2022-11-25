@@ -21,7 +21,7 @@ typedef struct gio_feat_s {
 	int32_t strand:16, frame:16;
 	int32_t n_child, m_child;
 	int32_t n_attr, m_attr;
-	int64_t start, end;
+	int64_t st, en;
 	double score; 
 	int64_t lineoff;
 	const char *ctg, *src, *feat_ori, *id, *name;

@@ -1,3 +1,4 @@
+#include <math.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <stdarg.h>
@@ -50,6 +51,7 @@ void gio_sprintf_lite(kstring_t *s, const char *fmt, ...) // FIXME: make it work
 				if (c < 0) buf[l++] = '-';
 				str_enlarge(s, l);
 				for (i = l - 1; i >= 0; --i) s->s[s->l++] = buf[i];
+				++p;
 			} else if (*p == 'u') {
 				int i, l = 0;
 				uint32_t x;
@@ -85,10 +87,30 @@ static void write_comment(FILE *fp, const gio_gff_t *gff, kstring_t *str)
 	}
 }
 
+static void write_feat(kstring_t *str, const gio_gff_t *gff, const gio_feat_t *f)
+{
+	str->l = 0;
+	gio_sprintf_lite(str, "%s\t%s\t%s\t%ld\t%ld\t", f->ctg, f->src, f->feat_ori, f->st + 1, f->en);
+	if (!isnan(f->score)) {
+		char buf[32];
+		snprintf(buf, 32, "%g", f->score);
+		gio_sprintf_lite(str, "%s", buf);
+	} else gio_sprintf_lite(str, ".");
+	gio_sprintf_lite(str, "\t%c", f->strand < 0? '-' : f->strand > 0? '+' : '.');
+	if (f->frame < 0) gio_sprintf_lite(str, "\t.");
+	else gio_sprintf_lite(str, "\t%d", f->frame);
+	gio_sprintf_lite(str, "\n");
+}
+
 void gio_write_gff_stream(FILE *fp, const gio_gff_t *gff)
 {
+	int32_t i;
 	kstring_t str = {0,0,0};
 	write_comment(fp, gff, &str);
+	for (i = 0; i < gff->n_feat; ++i) {
+		write_feat(&str, gff, &gff->feat[i]);
+		fwrite(str.s, 1, str.l, fp);
+	}
 	free(str.s);
 }
 

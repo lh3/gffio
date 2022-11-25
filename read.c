@@ -28,9 +28,9 @@ static void gio_parse_feat(gio_gff_t *gff, char *str)
 			} else if (i == 2) { // source
 				f->feat_ori = gio_dict_put(gff->dict, q);
 			} else if (i == 3) { // start
-				f->start = atol(q) - 1;
+				f->st = atol(q) - 1;
 			} else if (i == 4) { // end
-				f->end = atol(q);
+				f->en = atol(q);
 			} else if (i == 5) { // score
 				char *r;
 				f->score = strcmp(q, ".") == 0? nan("1") : strtod(q, &r);
