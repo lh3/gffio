@@ -1,12 +1,43 @@
 #include <string.h>
+#include <stdio.h>
 #include <math.h>
 #include <zlib.h>
 #include "gio-priv.h"
 #include "kseq.h"
 KSTREAM_INIT(gzFile, gzread, 0x10000)
 
-static void gio_parse_attr(gio_feat_t *f, char *str)
+static void gio_parse_attr(gio_gff_t *g, gio_feat_t *f, char *str)
 {
+	char *q = str;
+	int32_t len;
+	len = strlen(str);
+	while (*q && q - str < len) {
+		char *p = q, *key = 0, *val = 0;
+		while (*p && (*p == ';' || *p == ' ')) ++p; // skip leading ; or SPACE
+		key = p;
+		while (*p && *p != '=' && *p != ' ') ++p; // get the key string
+		if (*p == 0) break; // no value
+		*p++ = 0;
+		while (*p && (*p == ';' || *p == ' ')) ++p; // skip ; or SPACE
+		if (*p == '\'' || *p == '\"') {
+			int32_t c = *p++;
+			val = p;
+			while (*p && *p != c) ++p; // TODO: support escape
+			if (*p == 0) break; // missing the ending quotation mark
+		} else {
+			val = p;
+			while (*p && *p != ';') ++p; // TODO: support escape
+		}
+		*p = 0;
+		q = p + 1;
+		if (key != 0 && val != 0) {
+			if (f->n_attr == f->m_attr)
+				GIO_EXPAND(f->attr, f->m_attr);
+			f->attr[f->n_attr].key = gio_dict_put(g->dict, key);
+			f->attr[f->n_attr].val = gio_dict_put(g->dict, val);
+			f->n_attr++;
+		}
+	}
 }
 
 static void gio_parse_feat(gio_gff_t *gff, char *str)
@@ -39,7 +70,7 @@ static void gio_parse_feat(gio_gff_t *gff, char *str)
 			} else if (i == 7) { // frame
 				f->frame = *q >= '0' && *q <= '9'? atoi(q) : -1;
 			} else if (i == 8) { // attributes
-				gio_parse_attr(f, q);
+				gio_parse_attr(gff, f, q);
 			}
 			q = p + 1, ++i;
 			if (c == 0 || i == 9) break;

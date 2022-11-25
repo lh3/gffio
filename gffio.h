@@ -12,6 +12,10 @@
 #define GIO_FEAT_START   6
 #define GIO_FEAT_STOP    7
 
+#define GIO_FMT_GFF3     1
+#define GIO_FMT_GTF      2
+#define GIO_FMT_BED12    3
+
 typedef struct {
 	const char *key, *val;
 } gio_attr_t;
@@ -51,7 +55,7 @@ extern "C" {
 
 gio_gff_t *gio_read(const char *fn);
 void gio_destroy(gio_gff_t *gff);
-void gio_write(const char *fn, const gio_gff_t *gff);
+void gio_write(const char *fn, const gio_gff_t *gff, int32_t fmt);
 
 #ifdef __cplusplus
 }

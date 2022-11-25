@@ -87,8 +87,9 @@ static void write_comment(FILE *fp, const gio_gff_t *gff, kstring_t *str)
 	}
 }
 
-static void write_feat(kstring_t *str, const gio_gff_t *gff, const gio_feat_t *f)
+static void write_feat(kstring_t *str, const gio_gff_t *gff, const gio_feat_t *f, int32_t fmt)
 {
+	int32_t i;
 	str->l = 0;
 	gio_sprintf_lite(str, "%s\t%s\t%s\t%ld\t%ld\t", f->ctg, f->src, f->feat_ori, f->st + 1, f->en);
 	if (!isnan(f->score)) {
@@ -97,27 +98,35 @@ static void write_feat(kstring_t *str, const gio_gff_t *gff, const gio_feat_t *f
 		gio_sprintf_lite(str, "%s", buf);
 	} else gio_sprintf_lite(str, ".");
 	gio_sprintf_lite(str, "\t%c", f->strand < 0? '-' : f->strand > 0? '+' : '.');
-	if (f->frame < 0) gio_sprintf_lite(str, "\t.");
-	else gio_sprintf_lite(str, "\t%d", f->frame);
+	if (f->frame < 0) gio_sprintf_lite(str, "\t.\t");
+	else gio_sprintf_lite(str, "\t%d\t", f->frame);
+	if (fmt == GIO_FMT_GFF3) {
+		if (f->n_attr == 0) gio_sprintf_lite(str, ".");
+		for (i = 0; i < f->n_attr; ++i) {
+			gio_sprintf_lite(str, "%s=%s", f->attr[i].key, f->attr[i].val);
+			if (i != f->n_attr - 1) gio_sprintf_lite(str, ";");
+		}
+	} else if (fmt == GIO_FMT_GTF) {
+	}
 	gio_sprintf_lite(str, "\n");
 }
 
-void gio_write_gff_stream(FILE *fp, const gio_gff_t *gff)
+void gio_write_gff_stream(FILE *fp, const gio_gff_t *gff, int32_t fmt)
 {
 	int32_t i;
 	kstring_t str = {0,0,0};
 	write_comment(fp, gff, &str);
 	for (i = 0; i < gff->n_feat; ++i) {
-		write_feat(&str, gff, &gff->feat[i]);
+		write_feat(&str, gff, &gff->feat[i], fmt);
 		fwrite(str.s, 1, str.l, fp);
 	}
 	free(str.s);
 }
 
-void gio_write(const char *fn, const gio_gff_t *gff)
+void gio_write(const char *fn, const gio_gff_t *gff, int32_t fmt)
 {
 	FILE *fp;
 	fp = fn && strcmp(fn, "-")? fopen(fn, "w") : fdopen(1, "w");
-	gio_write_gff_stream(fp, gff);
+	gio_write_gff_stream(fp, gff, fmt);
 	fclose(fp);
 }
