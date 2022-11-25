@@ -1,23 +1,23 @@
-#include "gio-priv.h"
+#include "mgf-priv.h"
 #include "khashl.h"
 
-KHASHL_CMAP_INIT(KH_LOCAL, gio_strhash_t, gio_sh, const char*, int32_t, kh_hash_str, kh_eq_str)
+KHASHL_CMAP_INIT(KH_LOCAL, mgf_strhash_t, mgf_sh, const char*, int32_t, kh_hash_str, kh_eq_str)
 
-struct gio_dict_s {
+struct mgf_dict_s {
 	int32_t n_str, m_str;
 	char **str;
-	gio_strhash_t *h;
+	mgf_strhash_t *h;
 };
 
-gio_dict_t *gio_dict_init(void)
+mgf_dict_t *mgf_dict_init(void)
 {
-	gio_dict_t *d;
-	GIO_CALLOC(d, 1);
-	d->h = gio_sh_init();
+	mgf_dict_t *d;
+	MGF_CALLOC(d, 1);
+	d->h = mgf_sh_init();
 	return d;
 }
 
-char *gio_strdup(const char *src)
+char *mgf_strdup(const char *src)
 {
 	int32_t len;
 	char *dst;
@@ -27,32 +27,32 @@ char *gio_strdup(const char *src)
 	return dst;
 }
 
-const char *gio_dict_put(gio_dict_t *d, const char *s)
+const char *mgf_dict_put(mgf_dict_t *d, const char *s)
 {
 	int absent;
 	khint_t k;
-	k = gio_sh_put(d->h, s, &absent);
+	k = mgf_sh_put(d->h, s, &absent);
 	if (absent) {
 		if (d->n_str == d->m_str)
-			GIO_EXPAND(d->str, d->m_str);
-		kh_key(d->h, k) = d->str[d->n_str] = gio_strdup(s);
+			MGF_EXPAND(d->str, d->m_str);
+		kh_key(d->h, k) = d->str[d->n_str] = mgf_strdup(s);
 		kh_val(d->h, k) = d->n_str++;
 	}
 	return kh_key(d->h, k);
 }
 
-const char *gio_dict_get(const gio_dict_t *d, const char *s)
+const char *mgf_dict_get(const mgf_dict_t *d, const char *s)
 {
 	khint_t k;
-	k = gio_sh_get(d->h, s);
+	k = mgf_sh_get(d->h, s);
 	return k == kh_end(d->h)? 0 : kh_key(d->h, k);
 }
 
-void gio_dict_destroy(gio_dict_t *d)
+void mgf_dict_destroy(mgf_dict_t *d)
 {
 	int32_t i;
 	if (d == 0) return;
-	gio_sh_destroy(d->h);
+	mgf_sh_destroy(d->h);
 	for (i = 0; i < d->n_str; ++i)
 		free(d->str[i]);
 	free(d->str);

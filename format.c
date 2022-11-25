@@ -3,7 +3,7 @@
 #include <stdlib.h>
 #include <stdarg.h>
 #include <string.h>
-#include "gio-priv.h"
+#include "mgf-priv.h"
 
 #define kroundup32(x) (--(x), (x)|=(x)>>1, (x)|=(x)>>2, (x)|=(x)>>4, (x)|=(x)>>8, (x)|=(x)>>16, ++(x))
 
@@ -23,7 +23,7 @@ static inline void str_copy(kstring_t *s, const char *st, const char *en)
 	s->l += en - st;
 }
 
-void gio_sprintf_lite(kstring_t *s, const char *fmt, ...) // FIXME: make it work for 64-bit integers
+void mgf_sprintf_lite(kstring_t *s, const char *fmt, ...) // FIXME: make it work for 64-bit integers
 {
 	char buf[32]; // for integer to string conversion
 	const char *p, *q;
@@ -77,41 +77,41 @@ void gio_sprintf_lite(kstring_t *s, const char *fmt, ...) // FIXME: make it work
 	s->s[s->l] = 0;
 }
 
-static void write_comment(FILE *fp, const gio_gff_t *gff, kstring_t *str)
+static void write_comment(FILE *fp, const mgf_gff_t *gff, kstring_t *str)
 {
 	int32_t i;
 	for (i = 0; i < gff->n_comm; ++i) {
 		str->l = 0;
-		gio_sprintf_lite(str, "%s\n", gff->comm[i].line);
+		mgf_sprintf_lite(str, "%s\n", gff->comm[i].line);
 		fwrite(str->s, 1, str->l, fp);
 	}
 }
 
-static void write_feat(kstring_t *str, const gio_gff_t *gff, const gio_feat_t *f, int32_t fmt)
+static void write_feat(kstring_t *str, const mgf_gff_t *gff, const mgf_feat_t *f, int32_t fmt)
 {
 	int32_t i;
 	str->l = 0;
-	gio_sprintf_lite(str, "%s\t%s\t%s\t%ld\t%ld\t", f->ctg, f->src, f->feat_ori, f->st + 1, f->en);
+	mgf_sprintf_lite(str, "%s\t%s\t%s\t%ld\t%ld\t", f->ctg, f->src, f->feat_ori, f->st + 1, f->en);
 	if (!isnan(f->score)) {
 		char buf[32];
 		snprintf(buf, 32, "%g", f->score);
-		gio_sprintf_lite(str, "%s", buf);
-	} else gio_sprintf_lite(str, ".");
-	gio_sprintf_lite(str, "\t%c", f->strand < 0? '-' : f->strand > 0? '+' : '.');
-	if (f->frame < 0) gio_sprintf_lite(str, "\t.\t");
-	else gio_sprintf_lite(str, "\t%d\t", f->frame);
-	if (fmt == GIO_FMT_GFF3) {
-		if (f->n_attr == 0) gio_sprintf_lite(str, ".");
+		mgf_sprintf_lite(str, "%s", buf);
+	} else mgf_sprintf_lite(str, ".");
+	mgf_sprintf_lite(str, "\t%c", f->strand < 0? '-' : f->strand > 0? '+' : '.');
+	if (f->frame < 0) mgf_sprintf_lite(str, "\t.\t");
+	else mgf_sprintf_lite(str, "\t%d\t", f->frame);
+	if (fmt == MGF_FMT_GFF3) {
+		if (f->n_attr == 0) mgf_sprintf_lite(str, ".");
 		for (i = 0; i < f->n_attr; ++i) {
-			gio_sprintf_lite(str, "%s=%s", f->attr[i].key, f->attr[i].val);
-			if (i != f->n_attr - 1) gio_sprintf_lite(str, ";");
+			mgf_sprintf_lite(str, "%s=%s", f->attr[i].key, f->attr[i].val);
+			if (i != f->n_attr - 1) mgf_sprintf_lite(str, ";");
 		}
-	} else if (fmt == GIO_FMT_GTF) {
+	} else if (fmt == MGF_FMT_GTF) {
 	}
-	gio_sprintf_lite(str, "\n");
+	mgf_sprintf_lite(str, "\n");
 }
 
-void gio_write_gff_stream(FILE *fp, const gio_gff_t *gff, int32_t fmt)
+void mgf_write_gff_stream(FILE *fp, const mgf_gff_t *gff, int32_t fmt)
 {
 	int32_t i;
 	kstring_t str = {0,0,0};
@@ -123,10 +123,10 @@ void gio_write_gff_stream(FILE *fp, const gio_gff_t *gff, int32_t fmt)
 	free(str.s);
 }
 
-void gio_write(const char *fn, const gio_gff_t *gff, int32_t fmt)
+void mgf_write(const char *fn, const mgf_gff_t *gff, int32_t fmt)
 {
 	FILE *fp;
 	fp = fn && strcmp(fn, "-")? fopen(fn, "w") : fdopen(1, "w");
-	gio_write_gff_stream(fp, gff, fmt);
+	mgf_write_gff_stream(fp, gff, fmt);
 	fclose(fp);
 }

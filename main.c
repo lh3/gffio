@@ -1,11 +1,11 @@
 #include <string.h>
 #include <stdio.h>
-#include "gffio.h"
+#include "minigff.h"
 #include "ketopt.h"
 
 int main_view(int argc, char *argv[])
 {
-	gio_gff_t *gff;
+	mgf_gff_t *gff;
 	ketopt_t o = KETOPT_INIT;
 	int32_t c;
 	while ((c = ketopt(&o, argc, argv, 1, "", 0)) >= 0) {
@@ -14,9 +14,9 @@ int main_view(int argc, char *argv[])
 		fprintf(stderr, "Usage: gffio view [options] <in.gff>\n");
 		return 1;
 	}
-	gff = gio_read(argv[o.ind]);
-	gio_write(0, gff, GIO_FMT_GFF3);
-	gio_destroy(gff);
+	gff = mgf_read(argv[o.ind]);
+	mgf_write(0, gff, MGF_FMT_GFF3);
+	mgf_destroy(gff);
 	return 0;
 }
 
