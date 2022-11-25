@@ -4,7 +4,7 @@ CFLAGS=		-std=c99 -g -Wall -O3
 CXXFLAGS=	$(CFLAGS)
 CPPFLAGS=
 INCLUDES=
-OBJS=		dict.o util.o read.o format.o
+OBJS=		dict.o regular.o read.o format.o
 PROG=		minigff
 LIBS=		-lz -lm
 
@@ -39,4 +39,4 @@ dict.o: mgf-priv.h minigff.h khashl.h
 format.o: mgf-priv.h minigff.h
 main.o: minigff.h ketopt.h
 read.o: mgf-priv.h minigff.h kseq.h
-util.o: mgf-priv.h minigff.h
+regular.o: mgf-priv.h minigff.h
