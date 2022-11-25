@@ -1,5 +1,5 @@
-#ifndef GFFIO_H
-#define GFFIO_H
+#ifndef MINIGFF_H
+#define MINIGFF_H
 
 #include <stdint.h>
 
@@ -28,9 +28,9 @@ typedef struct mgf_feat_s {
 	int64_t st, en;
 	double score; 
 	int64_t lineoff;
-	const char *ctg, *src, *feat_ori, *id, *name;
+	const char *ctg, *src, *feat_ori, *id;
 	mgf_attr_t *attr;
-	struct mgf_feat_s **child, **parent;
+	struct mgf_feat_s **parent, **child;
 } mgf_feat_t;
 
 typedef struct {
@@ -47,7 +47,10 @@ typedef struct {
 	mgf_feat_t *feat, **feat_view;
 	mgf_comm_t *comm;
 	mgf_dict_t *dict;
+	void *dict_id;
 } mgf_gff_t;
+
+extern int mgf_verbose;
 
 #ifdef __cplusplus
 extern "C" {

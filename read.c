@@ -98,6 +98,8 @@ mgf_gff_t *mgf_read_ks(kstream_t *ks)
 		++lineoff;
 	}
 	mgf_label(gff);
+	mgf_build_id_dict(gff);
+	mgf_connect(gff);
 	return gff;
 }
 

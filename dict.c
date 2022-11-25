@@ -58,3 +58,31 @@ void mgf_dict_destroy(mgf_dict_t *d)
 	free(d->str);
 	free(d);
 }
+
+void *mgf_id_init(void)
+{
+	return (void*)mgf_sh_init();
+}
+
+void mgf_id_destroy(void *d)
+{
+	mgf_sh_destroy((mgf_strhash_t*)d);
+}
+
+int32_t mgf_id_put(void *d, const char *id, int32_t idx)
+{
+	int absent;
+	khint_t k;
+	mgf_strhash_t *h = (mgf_strhash_t*)d;
+	k = mgf_sh_put(h, id, &absent);
+	if (absent) kh_val(h, k) = idx;
+	return absent;
+}
+
+int32_t mgf_id_get(void *d, const char *id)
+{
+	khint_t k;
+	mgf_strhash_t *h = (mgf_strhash_t*)d;
+	k = mgf_sh_get(h, id);
+	return k == kh_end(h)? -1 : kh_val(h, k);
+}

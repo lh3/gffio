@@ -1,5 +1,8 @@
 #include <stdlib.h>
+#include <stdio.h>
 #include "mgf-priv.h"
+
+int mgf_verbose = 3;
 
 void mgf_attr_append(mgf_gff_t *g, mgf_feat_t *f, const char *key, const char *val)
 {
@@ -35,6 +38,10 @@ static void mgf_add_id_name(mgf_gff_t *gff, mgf_feat_t *f, const char *s_id, con
 		mgf_attr_append(gff, f, id_xkey, f->attr[j_id].val);
 	else if (j_xid >= 0 && j_id < 0)
 		mgf_attr_append(gff, f, id_name, f->attr[j_xid].val);
+	else if (j_xid < 0 && j_id < 0) {
+		if (mgf_verbose >= 2)
+			fprintf(stderr, "WARNING: missing ID for '%s %ld %ld'\n", f->ctg, (long)f->st+1, (long)f->en);
+	}
 }
 
 static void mgf_add_parent(mgf_gff_t *gff, mgf_feat_t *f, const char *s_xid, const char *s_par)
@@ -92,6 +99,64 @@ void mgf_label(mgf_gff_t *gff)
 		} else if (f->feat_ori == s_stop) {
 			f->feat = MGF_FEAT_STOP;
 			mgf_add_parent(gff, f, s_tid, s_par);
+		}
+		f->id = mgf_attr_find(gff, f, "ID");
+	}
+}
+
+void mgf_build_id_dict(mgf_gff_t *gff)
+{
+	int32_t i, t;
+	gff->dict_id = mgf_id_init();
+	for (i = 0; i < gff->n_feat; ++i) {
+		mgf_feat_t *f = &gff->feat[i];
+		if (f->id) {
+			t = mgf_id_put(gff->dict_id, f->id, i);
+			if (!t && mgf_verbose >= 2)
+				fprintf(stderr, "WARNING: duplicated ID '%s'\n", f->id);
+		}
+	}
+}
+
+void mgf_connect(mgf_gff_t *gff)
+{
+	int32_t i, k;
+	const char *s_par = 0, *par;
+	s_par = mgf_dict_get(gff->dict, "Parent");
+	if (s_par == 0) return;
+	for (i = 0; i < gff->n_feat; ++i) {
+		mgf_feat_t *f = &gff->feat[i];
+		f->n_child = f->n_parent = 0;
+	}
+	for (i = 0; i < gff->n_feat; ++i) { // count children
+		mgf_feat_t *f = &gff->feat[i];
+		par = mgf_attr_find(gff, f, "Parent");
+		if (par) {
+			k = mgf_id_get(gff->dict_id, par);
+			if (k >= 0) { // TODO: support multiple parents (low priority)
+				gff->feat[k].n_child++;
+				f->n_parent = 1;
+			} else if (mgf_verbose >= 2)
+				fprintf(stderr, "WARNING: failed to find Parent ID '%s'\n", par);
+		}
+	}
+	for (i = 0; i < gff->n_feat; ++i) { // allocate
+		mgf_feat_t *f = &gff->feat[i];
+		if (f->n_parent + f->n_child > 0) {
+			MGF_CALLOC(f->parent, f->n_parent + f->n_child);
+			f->child = f->parent + f->n_parent;
+			f->n_parent = f->n_child = 0;
+		}
+	}
+	for (i = 0; i < gff->n_feat; ++i) { // population ::child and ::parent
+		mgf_feat_t *f = &gff->feat[i];
+		par = mgf_attr_find(gff, f, "Parent");
+		if (par) {
+			k = mgf_id_get(gff->dict_id, par);
+			if (k >= 0) { // TODO: support multiple parents (low priority)
+				gff->feat[k].child[gff->feat[k].n_child++] = f;
+				f->parent[0] = &gff->feat[k];
+			}
 		}
 	}
 }

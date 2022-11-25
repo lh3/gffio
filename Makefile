@@ -35,7 +35,8 @@ depend:
 
 # DO NOT DELETE
 
-dict.o: khashl.h
-main.o: ketopt.h
+dict.o: mgf-priv.h minigff.h khashl.h
+format.o: mgf-priv.h minigff.h
+main.o: minigff.h ketopt.h
 read.o: mgf-priv.h minigff.h kseq.h
 util.o: mgf-priv.h minigff.h
