@@ -86,3 +86,9 @@ int32_t mgf_id_get(void *d, const char *id)
 	k = mgf_sh_get(h, id);
 	return k == kh_end(h)? -1 : kh_val(h, k);
 }
+
+int32_t mgf_id_size(void *d)
+{
+	mgf_strhash_t *h = (mgf_strhash_t*)d;
+	return kh_size(h);
+}

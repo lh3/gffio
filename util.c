@@ -55,6 +55,34 @@ static void mgf_add_parent(mgf_gff_t *gff, mgf_feat_t *f, const char *s_xid, con
 	mgf_attr_append(gff, f, "Parent", f->attr[j_xid].val);
 }
 
+static void mgf_check_id(const mgf_gff_t *gff)
+{
+	int32_t i;
+	if (mgf_verbose < 4) return;
+	for (i = 0; i < gff->n_feat; ++i) {
+		mgf_feat_t *f = &gff->feat[i];
+		if (f->id == 0 && f->n_parent == 0)
+			fprintf(stderr, "WARNING: missing both ID and Parent at '%s %ld %ld'\n", f->ctg, (long)f->st+1, (long)f->en);
+	}
+}
+
+static void mgf_build_id_dict(mgf_gff_t *gff)
+{
+	int32_t i, t, n_dup = 0;
+	gff->dict_id = mgf_id_init();
+	for (i = 0; i < gff->n_feat; ++i) {
+		mgf_feat_t *f = &gff->feat[i];
+		if (f->id) {
+			t = mgf_id_put(gff->dict_id, f->id, i);
+			if (!t) ++n_dup;
+			if (!t && mgf_verbose >= 4)
+				fprintf(stderr, "WARNING: duplicated ID '%s'\n", f->id);
+		}
+	}
+	if (n_dup > 0 && mgf_verbose >= 2)
+		fprintf(stderr, "WARNING: there are duplicated IDs\n");
+}
+
 void mgf_label(mgf_gff_t *gff)
 {
 	int32_t i;
@@ -102,20 +130,8 @@ void mgf_label(mgf_gff_t *gff)
 		}
 		f->id = mgf_attr_find(gff, f, "ID");
 	}
-}
-
-void mgf_build_id_dict(mgf_gff_t *gff)
-{
-	int32_t i, t;
-	gff->dict_id = mgf_id_init();
-	for (i = 0; i < gff->n_feat; ++i) {
-		mgf_feat_t *f = &gff->feat[i];
-		if (f->id) {
-			t = mgf_id_put(gff->dict_id, f->id, i);
-			if (!t && mgf_verbose >= 2)
-				fprintf(stderr, "WARNING: duplicated ID '%s'\n", f->id);
-		}
-	}
+	mgf_check_id(gff);
+	mgf_build_id_dict(gff);
 }
 
 void mgf_connect(mgf_gff_t *gff)
@@ -155,7 +171,7 @@ void mgf_connect(mgf_gff_t *gff)
 			k = mgf_id_get(gff->dict_id, par);
 			if (k >= 0) { // TODO: support multiple parents (low priority)
 				gff->feat[k].child[gff->feat[k].n_child++] = f;
-				f->parent[0] = &gff->feat[k];
+				f->parent[f->n_parent++] = &gff->feat[k];
 			}
 		}
 	}

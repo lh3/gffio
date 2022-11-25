@@ -1,4 +1,5 @@
 #include <string.h>
+#include <stdlib.h>
 #include <stdio.h>
 #include "minigff.h"
 #include "ketopt.h"
@@ -8,10 +9,11 @@ int main_view(int argc, char *argv[])
 	mgf_gff_t *gff;
 	ketopt_t o = KETOPT_INIT;
 	int32_t c;
-	while ((c = ketopt(&o, argc, argv, 1, "", 0)) >= 0) {
+	while ((c = ketopt(&o, argc, argv, 1, "v:", 0)) >= 0) {
+		if (c == 'v') mgf_verbose = atoi(o.arg);
 	}
 	if (o.ind == argc) {
-		fprintf(stderr, "Usage: gffio view [options] <in.gff>\n");
+		fprintf(stderr, "Usage: minigff view [options] <in.gff>\n");
 		return 1;
 	}
 	gff = mgf_read(argv[o.ind]);
@@ -22,7 +24,7 @@ int main_view(int argc, char *argv[])
 
 static int usage(FILE *fp)
 {
-	fprintf(fp, "Usage: gffio <command> <arguments>\n");
+	fprintf(fp, "Usage: minigff <command> <arguments>\n");
 	fprintf(fp, "Commands:\n");
 	fprintf(fp, "  view      read GTF/GFF3\n");
 	return 1;
