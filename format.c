@@ -3,6 +3,7 @@
 #include <stdlib.h>
 #include <stdarg.h>
 #include <string.h>
+#include <assert.h>
 #include "mgf-priv.h"
 
 #define kroundup32(x) (--(x), (x)|=(x)>>1, (x)|=(x)>>2, (x)|=(x)>>4, (x)|=(x)>>8, (x)|=(x)>>16, ++(x))
@@ -136,5 +137,36 @@ void mgf_write(const char *fn, const mgf_gff_t *gff, int32_t fmt)
 	FILE *fp;
 	fp = fn && strcmp(fn, "-")? fopen(fn, "w") : fdopen(1, "w");
 	mgf_write_gff_stream(fp, gff, fmt);
+	fclose(fp);
+}
+
+void mgf_write_list(const char *fn, const mgf_gff_t *gff, int32_t fmt, int32_t n, char **list)
+{
+	int32_t i, len = 0, cap = 0;
+	char *str = 0;
+	mgf_qbuf_t *b;
+	FILE *fp;
+	if (n <= 0) return;
+	fp = fn && strcmp(fn, "-")? fopen(fn, "w") : fdopen(1, "w");
+	assert(fp);
+	b = mgf_qbuf_init(gff);
+	for (i = 0; i < n; ++i) {
+		const mgf_feat_t *f;
+		f = mgf_get_by_id(gff, list[i]);
+		if (f == 0) {
+			if (mgf_verbose >= 2)
+				fprintf(stderr, "WARNING: failed to find ID '%s'\n", list[i]);
+		} else {
+			const mgf_feat_t **fs;
+			int32_t j, n_fs;
+			fs = mgf_descend(b, f, &n_fs);
+			for (j = 0; j < n_fs; ++j) {
+				len = 0;
+				mgf_write_feat(&str, &len, &cap, gff, fs[j], MGF_FMT_GFF3);
+				fwrite(str, 1, len, fp);
+			}
+		}
+	}
+	mgf_qbuf_destroy(b);
 	fclose(fp);
 }

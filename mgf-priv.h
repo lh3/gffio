@@ -36,6 +36,7 @@ mgf_dict_t *mgf_dict_init(void);
 void mgf_dict_destroy(mgf_dict_t *d);
 const char *mgf_dict_put(mgf_dict_t *d, const char *s);
 const char *mgf_dict_get(const mgf_dict_t *d, const char *s);
+char *mgf_strndup(const char *src, size_t n);
 
 void *mgf_id_init(void);
 void mgf_id_destroy(void *d);

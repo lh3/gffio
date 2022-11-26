@@ -8,43 +8,31 @@ int main_view(int argc, char *argv[])
 {
 	mgf_gff_t *gff;
 	ketopt_t o = KETOPT_INIT;
-	int32_t c, to_group = 0;
-	char *id = 0;
-	while ((c = ketopt(&o, argc, argv, 1, "gv:d:", 0)) >= 0) {
+	int32_t c, to_group = 0, fmt = MGF_FMT_GFF3;
+	char *id_list = 0;
+	while ((c = ketopt(&o, argc, argv, 1, "gv:l:", 0)) >= 0) {
 		if (c == 'v') mgf_verbose = atoi(o.arg);
 		else if (c == 'g') to_group = 1;
-		else if (c == 'd') id = o.arg;
+		else if (c == 'l') id_list = o.arg;
 	}
 	if (o.ind == argc) {
 		fprintf(stderr, "Usage: minigff view [options] <in.gff>\n");
 		fprintf(stderr, "Options:\n");
 		fprintf(stderr, "  -g        group by hierarchy\n");
+		fprintf(stderr, "  -l STR    extract records descended from ID list []\n");
 		fprintf(stderr, "  -v INT    verbose level [%d]\n", mgf_verbose);
-		fprintf(stderr, "  -d STR    extract records descended from ID 'STR' []\n");
 		return 1;
 	}
 	gff = mgf_read(argv[o.ind]);
 
-	if (id) {
-		const mgf_feat_t *f;
-		f = mgf_get_by_id(gff, id);
-		if (f) {
-			char *str = 0;
-			int32_t i, n_fs, len = 0, cap = 0;
-			const mgf_feat_t **fs;
-			mgf_qbuf_t *b;
-			b = mgf_qbuf_init(gff);
-			fs = mgf_descend(b, f, &n_fs);
-			for (i = 0; i < n_fs; ++i) {
-				len = 0;
-				mgf_write_feat(&str, &len, &cap, gff, fs[i], MGF_FMT_GFF3);
-				fputs(str, stdout);
-			}
-			mgf_qbuf_destroy(b);
-		}
+	if (id_list) {
+		int32_t n;
+		char **list;
+		list = mgf_read_list(id_list, &n);
+		mgf_write_list(0, gff, fmt, n, list);
 	} else {
 		if (to_group) mgf_group(gff);
-		mgf_write(0, gff, MGF_FMT_GFF3);
+		mgf_write(0, gff, fmt);
 	}
 
 	mgf_destroy(gff);

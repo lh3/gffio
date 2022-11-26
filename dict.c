@@ -27,6 +27,15 @@ char *mgf_strdup(const char *src)
 	return dst;
 }
 
+char *mgf_strndup(const char *src, size_t n)
+{
+	char *dst;
+	dst = (char*)malloc(n + 1);
+	strncpy(dst, src, n);
+	dst[n] = 0;
+	return dst;
+}
+
 const char *mgf_dict_put(mgf_dict_t *d, const char *s)
 {
 	int absent;

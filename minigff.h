@@ -63,6 +63,7 @@ extern "C" {
 mgf_gff_t *mgf_read(const char *fn);
 void mgf_destroy(mgf_gff_t *gff);
 void mgf_write(const char *fn, const mgf_gff_t *gff, int32_t fmt);
+void mgf_write_list(const char *fn, const mgf_gff_t *gff, int32_t fmt, int32_t n, char **list);
 
 void mgf_write_feat(char **str, int32_t *len, int32_t *cap, const mgf_gff_t *gff, const mgf_feat_t *f, int32_t fmt);
 void mgf_group(mgf_gff_t *gff);
@@ -71,6 +72,8 @@ const mgf_feat_t *mgf_get_by_id(const mgf_gff_t *gff, const char *id);
 mgf_qbuf_t *mgf_qbuf_init(const mgf_gff_t *gff);
 void mgf_qbuf_destroy(mgf_qbuf_t *b);
 const mgf_feat_t **mgf_descend(mgf_qbuf_t *b, const mgf_feat_t *f, int32_t *n);
+
+char **mgf_read_list(const char *o, int *n_);
 
 #ifdef __cplusplus
 }
