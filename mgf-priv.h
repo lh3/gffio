@@ -42,6 +42,8 @@ const char *mgf_attr_find(const mgf_gff_t *g, const mgf_feat_t *f, const char *k
 void mgf_label(mgf_gff_t *gff);
 void mgf_connect(mgf_gff_t *gff);
 
+const mgf_feat_t **mgf_toposort(const mgf_gff_t *gff);;
+
 #ifdef __cplusplus
 }
 #endif

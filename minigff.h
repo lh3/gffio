@@ -44,7 +44,8 @@ typedef struct mgf_dict_s mgf_dict_t;
 typedef struct {
 	int64_t n_feat, m_feat;
 	int64_t n_comm, m_comm;
-	mgf_feat_t *feat, **feat_view;
+	mgf_feat_t *feat;
+	const mgf_feat_t **feat_view;
 	mgf_comm_t *comm;
 	mgf_dict_t *dict;
 	void *dict_id;
@@ -62,8 +63,7 @@ void mgf_write(const char *fn, const mgf_gff_t *gff, int32_t fmt);
 
 const mgf_feat_t **mgf_get_by_id(const mgf_gff_t *gff, const char *id, const char *feat, int32_t *n_feat_);
 void mgf_write_feat(char **str, int32_t *len, int32_t *cap, const mgf_gff_t *gff, const mgf_feat_t *f, int32_t fmt);
-
-const mgf_feat_t **mgf_toposort(const mgf_gff_t *gff);
+void mgf_group(mgf_gff_t *gff);
 
 #ifdef __cplusplus
 }

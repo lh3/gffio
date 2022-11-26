@@ -77,7 +77,7 @@ void mgf_sprintf_lite(kstring_t *s, const char *fmt, ...)
 	s->s[s->l] = 0;
 }
 
-static void write_comment(FILE *fp, const mgf_gff_t *gff, kstring_t *str)
+void mgf_write_gff_comment(FILE *fp, const mgf_gff_t *gff, kstring_t *str)
 {
 	int32_t i;
 	for (i = 0; i < gff->n_comm; ++i) {
@@ -122,7 +122,7 @@ void mgf_write_gff_stream(FILE *fp, const mgf_gff_t *gff, int32_t fmt)
 {
 	int32_t i;
 	kstring_t str = {0,0,0};
-	write_comment(fp, gff, &str);
+	mgf_write_gff_comment(fp, gff, &str);
 	for (i = 0; i < gff->n_feat; ++i) {
 		str.l = 0;
 		write_feat(&str, gff, gff->feat_view? gff->feat_view[i] : &gff->feat[i], fmt);

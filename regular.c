@@ -216,3 +216,8 @@ const mgf_feat_t **mgf_toposort(const mgf_gff_t *gff)
 	kag_gfor_destroy(g);
 	return a;
 }
+
+void mgf_group(mgf_gff_t *gff)
+{
+	gff->feat_view = mgf_toposort(gff);
+}

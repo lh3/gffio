@@ -8,12 +8,16 @@ int main_view(int argc, char *argv[])
 {
 	mgf_gff_t *gff;
 	ketopt_t o = KETOPT_INIT;
-	int32_t c;
-	while ((c = ketopt(&o, argc, argv, 1, "v:", 0)) >= 0) {
+	int32_t c, to_group = 0;
+	while ((c = ketopt(&o, argc, argv, 1, "gv:", 0)) >= 0) {
 		if (c == 'v') mgf_verbose = atoi(o.arg);
+		else if (c == 'g') to_group = 1;
 	}
 	if (o.ind == argc) {
 		fprintf(stderr, "Usage: minigff view [options] <in.gff>\n");
+		fprintf(stderr, "Options:\n");
+		fprintf(stderr, "  -g        group by hierarchy\n");
+		fprintf(stderr, "  -v INT    verbose level [%d]\n", mgf_verbose);
 		return 1;
 	}
 	gff = mgf_read(argv[o.ind]);
@@ -27,16 +31,7 @@ int main_view(int argc, char *argv[])
 	fputs(str, stdout);
 	*/
 
-	char *str = 0;
-	int32_t i, n_fs, len = 0, cap = 0;
-	const mgf_feat_t **fs;
-	fs = mgf_toposort(gff);
-	for (i = 0; i < gff->n_feat; ++i) {
-		len = 0;
-		mgf_write_feat(&str, &len, &cap, gff, fs[i], MGF_FMT_GFF3);
-		fputs(str, stdout);
-	}
-
+	if (to_group) mgf_group(gff);
 	mgf_write(0, gff, MGF_FMT_GFF3);
 
 	mgf_destroy(gff);
