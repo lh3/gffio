@@ -51,6 +51,9 @@ typedef struct {
 	void *dict_id;
 } mgf_gff_t;
 
+struct mgf_qbuf_s;
+typedef struct mgf_qbuf_s mgf_qbuf_t;
+
 extern int mgf_verbose;
 
 #ifdef __cplusplus
@@ -61,9 +64,13 @@ mgf_gff_t *mgf_read(const char *fn);
 void mgf_destroy(mgf_gff_t *gff);
 void mgf_write(const char *fn, const mgf_gff_t *gff, int32_t fmt);
 
-const mgf_feat_t **mgf_get_by_id(const mgf_gff_t *gff, const char *id, const char *feat, int32_t *n_feat_);
 void mgf_write_feat(char **str, int32_t *len, int32_t *cap, const mgf_gff_t *gff, const mgf_feat_t *f, int32_t fmt);
 void mgf_group(mgf_gff_t *gff);
+
+const mgf_feat_t *mgf_get_by_id(const mgf_gff_t *gff, const char *id);
+mgf_qbuf_t *mgf_qbuf_init(const mgf_gff_t *gff);
+void mgf_qbuf_destroy(mgf_qbuf_t *b);
+const mgf_feat_t **mgf_descend(mgf_qbuf_t *b, const mgf_feat_t *f, int32_t *n);
 
 #ifdef __cplusplus
 }

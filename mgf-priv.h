@@ -12,6 +12,13 @@
 		(m) += ((m)>>1) + 16; \
 		MGF_REALLOC((a), (m)); \
 	} while (0)
+#define MGF_PUSH_BACK(n_, m_, a_, v_) do { \
+		if ((n_) == (m_)) { \
+			(m_) += ((m_)>>1) + 16; \
+			MGF_REALLOC((a_), (m_)); \
+		} \
+		(a_)[(n_)++] = (v_); \
+	} while (0)
 
 #ifndef KSTRING_T
 #define KSTRING_T kstring_t

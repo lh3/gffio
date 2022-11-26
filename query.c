@@ -1,35 +1,51 @@
 #include <stdio.h>
 #include "mgf-priv.h"
 
-const mgf_feat_t **mgf_get_by_id(const mgf_gff_t *gff, const char *id, const char *feat, int32_t *n_feat_)
+struct mgf_qbuf_s {
+	int32_t ns, ms, nf, mf;
+	const mgf_feat_t **stack, **rst;
+	int8_t *flag;
+	const mgf_gff_t *gff;
+};
+
+const mgf_feat_t *mgf_get_by_id(const mgf_gff_t *gff, const char *id)
 {
-	int32_t i, k, n_feat;
-	const char *s_feat = 0;
-	const mgf_feat_t *f;
-	const mgf_feat_t **r;
-	*n_feat_ = 0;
+	int32_t k;
 	k = mgf_id_get(gff->dict_id, id);
-	if (k < 0) return 0; // the ID not found
-	if (feat) {
-		s_feat = mgf_dict_get(gff->dict, feat);
-		if (s_feat == 0) return 0; // invalid feat
+	return k < 0? 0 : &gff->feat[k];
+}
+
+mgf_qbuf_t *mgf_qbuf_init(const mgf_gff_t *gff)
+{
+	mgf_qbuf_t *b;
+	MGF_CALLOC(b, 1);
+	b->gff = gff;
+	MGF_CALLOC(b->flag, b->gff->n_feat);
+	return b;
+}
+
+void mgf_qbuf_destroy(mgf_qbuf_t *b)
+{
+	free(b->stack); free(b->rst); free(b->flag); free(b);
+}
+
+const mgf_feat_t **mgf_descend(mgf_qbuf_t *b, const mgf_feat_t *f, int32_t *n)
+{
+	int32_t i;
+	b->nf = 0;
+	MGF_PUSH_BACK(b->ns, b->ms, b->stack, f);
+	while (b->ns > 0) {
+		f = b->stack[--b->ns];
+		MGF_PUSH_BACK(b->nf, b->mf, b->rst, f);
+		for (i = f->n_child - 1; i >= 0; --i) {
+			const mgf_feat_t *g = f->child[i];
+			int32_t v = g - b->gff->feat;
+			if (!b->flag[v])
+				MGF_PUSH_BACK(b->ns, b->ms, b->stack, g);
+		}
 	}
-	f = &gff->feat[k];
-	if (f->n_child == 0) return 0; // no child features
-	if (s_feat == 0) {
-		n_feat = f->n_child;
-		MGF_CALLOC(r, n_feat);
-		for (i = 0; i < f->n_child; ++i)
-			r[i] = f->child[i];
-	} else {
-		for (i = 0, n_feat = 0; i < f->n_child; ++i)
-			if (f->child[i]->feat_ori == s_feat)
-				++n_feat;
-		MGF_CALLOC(r, n_feat);
-		for (i = 0, n_feat = 0; i < f->n_child; ++i)
-			if (f->child[i]->feat_ori == s_feat)
-				r[n_feat++] = f->child[i];
-	}
-	*n_feat_ = n_feat;
-	return r;
+	for (i = 0; i < b->nf; ++i)
+		b->flag[b->rst[i] - b->gff->feat] = 0;
+	*n = b->nf;
+	return b->rst;
 }
