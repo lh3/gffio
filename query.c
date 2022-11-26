@@ -1,3 +1,4 @@
+#include <stdio.h>
 #include "mgf-priv.h"
 
 const mgf_feat_t **mgf_get_by_id(const mgf_gff_t *gff, const char *id, const char *feat, int32_t *n_feat_)

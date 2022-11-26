@@ -87,10 +87,9 @@ static void write_comment(FILE *fp, const mgf_gff_t *gff, kstring_t *str)
 	}
 }
 
-static void write_feat(kstring_t *str, const mgf_gff_t *gff, const mgf_feat_t *f, int32_t fmt)
+void write_feat(kstring_t *str, const mgf_gff_t *gff, const mgf_feat_t *f, int32_t fmt)
 {
 	int32_t i;
-	str->l = 0;
 	mgf_sprintf_lite(str, "%s\t%s\t%s\t%ld\t%ld\t", f->ctg, f->src, f->feat_ori, f->st + 1, f->en);
 	if (!isnan(f->score)) {
 		char buf[32];
@@ -111,12 +110,21 @@ static void write_feat(kstring_t *str, const mgf_gff_t *gff, const mgf_feat_t *f
 	mgf_sprintf_lite(str, "\n");
 }
 
+void mgf_write_feat(char **str, int32_t *len, int32_t *cap, const mgf_gff_t *gff, const mgf_feat_t *f, int32_t fmt)
+{
+	kstring_t s;
+	s.s = *str, s.l = *len, s.m = *cap;
+	write_feat(&s, gff, f, fmt);
+	*str = s.s, *len = s.l, *cap = s.m;
+}
+
 void mgf_write_gff_stream(FILE *fp, const mgf_gff_t *gff, int32_t fmt)
 {
 	int32_t i;
 	kstring_t str = {0,0,0};
 	write_comment(fp, gff, &str);
 	for (i = 0; i < gff->n_feat; ++i) {
+		str.l = 0;
 		write_feat(&str, gff, gff->feat_view? gff->feat_view[i] : &gff->feat[i], fmt);
 		fwrite(str.s, 1, str.l, fp);
 	}

@@ -17,7 +17,18 @@ int main_view(int argc, char *argv[])
 		return 1;
 	}
 	gff = mgf_read(argv[o.ind]);
+
+	/*
+	char *str = 0;
+	int32_t i, n_fs, len = 0, cap = 0;
+	const mgf_feat_t **fs = mgf_get_by_id(gff, "ENST00000525758.1", 0, &n_fs);
+	for (i = 0; i < n_fs; ++i)
+		mgf_write_feat(&str, &len, &cap, gff, fs[i], MGF_FMT_GFF3);
+	fputs(str, stdout);
+	*/
+
 	mgf_write(0, gff, MGF_FMT_GFF3);
+
 	mgf_destroy(gff);
 	return 0;
 }
