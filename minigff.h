@@ -63,6 +63,8 @@ void mgf_write(const char *fn, const mgf_gff_t *gff, int32_t fmt);
 const mgf_feat_t **mgf_get_by_id(const mgf_gff_t *gff, const char *id, const char *feat, int32_t *n_feat_);
 void mgf_write_feat(char **str, int32_t *len, int32_t *cap, const mgf_gff_t *gff, const mgf_feat_t *f, int32_t fmt);
 
+const mgf_feat_t **mgf_toposort(const mgf_gff_t *gff);
+
 #ifdef __cplusplus
 }
 #endif

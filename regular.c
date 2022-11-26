@@ -1,6 +1,8 @@
 #include <stdlib.h>
+#include <assert.h>
 #include <stdio.h>
 #include "mgf-priv.h"
+#include "kagraph.h"
 
 int mgf_verbose = 3;
 
@@ -175,4 +177,42 @@ void mgf_connect(mgf_gff_t *gff)
 			}
 		}
 	}
+}
+
+// Convert gff grpah to TJ graph. This is not necessary but will make TJ more general
+static kag_gfor_t *mgf_gff2tj(const mgf_gff_t *gff)
+{
+	int32_t i, j;
+	uint64_t n_arc;
+	kag_gfor_t *g;
+	for (i = 0, n_arc = 0; i < gff->n_feat; ++i)
+		n_arc += gff->feat[i].n_child;
+	assert(n_arc < UINT32_MAX);
+	MGF_CALLOC(g, 1);
+	g->n_v = gff->n_feat;
+	MGF_CALLOC(g->idx, g->n_v);
+	MGF_CALLOC(g->nei, n_arc);
+	for (i = 0, g->n_arc = 0; i < gff->n_feat; ++i) {
+		const mgf_feat_t *f = &gff->feat[i];
+		g->idx[i] = (uint64_t)g->n_arc << 32 | f->n_child;
+		for (j = 0; j < f->n_child; ++j)
+			g->nei[g->n_arc++] = f->child[j] - gff->feat;
+	}
+	return g;
+}
+
+const mgf_feat_t **mgf_toposort(const mgf_gff_t *gff)
+{
+	uint32_t v;
+	uint64_t *b;
+	kag_gfor_t *g;
+	const mgf_feat_t **a;
+	g = mgf_gff2tj(gff);
+	b = kag_scc_tarjan(g);
+	MGF_CALLOC(a, gff->n_feat);
+	for (v = 0; v < gff->n_feat; ++v)
+		a[v] = &gff->feat[(uint32_t)b[v]];
+	free(b);
+	kag_gfor_destroy(g);
+	return a;
 }

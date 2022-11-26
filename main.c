@@ -27,6 +27,16 @@ int main_view(int argc, char *argv[])
 	fputs(str, stdout);
 	*/
 
+	char *str = 0;
+	int32_t i, n_fs, len = 0, cap = 0;
+	const mgf_feat_t **fs;
+	fs = mgf_toposort(gff);
+	for (i = 0; i < gff->n_feat; ++i) {
+		len = 0;
+		mgf_write_feat(&str, &len, &cap, gff, fs[i], MGF_FMT_GFF3);
+		fputs(str, stdout);
+	}
+
 	mgf_write(0, gff, MGF_FMT_GFF3);
 
 	mgf_destroy(gff);
