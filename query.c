@@ -116,12 +116,12 @@ int32_t mgf_mrna_gen(mgf_qbuf_t *b, const mgf_gff_t *gff, const mgf_feat_t *f, m
 		const mgf_feat_t *e = fs[i];
 		if (e->feat == MGF_FEAT_CDS) {
 			t->is_cds = 1;
-			t->st_cds = t->st < e->st? t->st : e->st;
-			t->en_cds = t->en > e->en? t->st : e->en;
+			t->st_cds = t->st_cds < e->st? t->st_cds : e->st;
+			t->en_cds = t->en_cds > e->en? t->en_cds : e->en;
 		}
 		if (e->feat == MGF_FEAT_EXON || e->feat == MGF_FEAT_CDS) {
 			t->st = t->st < e->st? t->st : e->st;
-			t->en = t->en > e->en? t->st : e->en;
+			t->en = t->en > e->en? t->en : e->en;
 		}
 		if (e->feat == MGF_FEAT_EXON || (e->feat == MGF_FEAT_CDS && n_exon == 0))
 			t->exon[j].st = e->st, t->exon[j++].en = e->en;

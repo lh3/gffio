@@ -130,7 +130,7 @@ void mgf_write_gff_stream(FILE *fp, const mgf_gff_t *gff, int32_t fmt)
 	free(str.s);
 }
 
-void mgf_write_bed12_stream(FILE *fp, const mgf_gff_t *gff)
+void mgf_write_bed12_stream(FILE *fp, const mgf_gff_t *gff, int32_t fmt)
 {
 	int32_t i, j;
 	kstring_t str = {0,0,0};
@@ -141,11 +141,14 @@ void mgf_write_bed12_stream(FILE *fp, const mgf_gff_t *gff)
 	for (i = 0; i < gff->n_feat; ++i) {
 		int32_t ret;
 		const mgf_feat_t *f = &gff->feat[i];
+		const char *name = 0;
 		if (f->feat != MGF_FEAT_MRNA) continue;
 		ret = mgf_mrna_gen(b, gff, f, &t);
 		if (ret < 0) continue; // error
 		str.l = 0;
-		mgf_sprintf_lite(&str, "%s\t%ld\t%ld\t%s\t0\t%c\t", f->ctg, t.st, t.en, t.name, t.strand < 0? '-' : t.strand > 0? '+' : '.');
+		name = fmt == MGF_FMT_BED12L? t.name : f->id? f->id : "NA";
+		mgf_sprintf_lite(&str, "%s\t%ld\t%ld\t%s", f->ctg, t.st, t.en, name);
+		mgf_sprintf_lite(&str, "\t0\t%c\t", t.strand < 0? '-' : t.strand > 0? '+' : '.');
 		mgf_sprintf_lite(&str, "%ld\t%ld\t0,0,0\t%d\t", t.st_cds, t.en_cds, t.n_exon);
 		for (j = 0; j < t.n_exon; ++j)
 			mgf_sprintf_lite(&str, "%ld,", t.exon[j].st);
@@ -165,8 +168,8 @@ void mgf_write(const char *fn, const mgf_gff_t *gff, int32_t fmt)
 	fp = fn && strcmp(fn, "-")? fopen(fn, "w") : fdopen(1, "w");
 	if (fmt == MGF_FMT_GFF3 || fmt == MGF_FMT_GTF)
 		mgf_write_gff_stream(fp, gff, fmt);
-	else if (fmt == MGF_FMT_BED12)
-		mgf_write_bed12_stream(fp, gff);
+	else if (fmt == MGF_FMT_BED12 || fmt == MGF_FMT_BED12L)
+		mgf_write_bed12_stream(fp, gff, fmt);
 	fclose(fp);
 }
 

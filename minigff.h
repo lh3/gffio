@@ -15,6 +15,7 @@
 #define MGF_FMT_GFF3     1
 #define MGF_FMT_GTF      2
 #define MGF_FMT_BED12    3
+#define MGF_FMT_BED12L   4
 
 typedef struct {
 	const char *key, *val;
