@@ -149,5 +149,8 @@ int32_t mgf_mrna_gen(mgf_qbuf_t *b, const mgf_gff_t *gff, const mgf_feat_t *f, m
 		s = mgf_attr_find(gff, f, "transcript_biotype");
 	if (s) mgf_sprintf_lite(&str, "%s", s);
 	t->m_name = str.m, t->name = str.s;
+
+	if ((t->st < f->st || t->en > f->en) && mgf_verbose >= 2)
+		fprintf(stderr, "[W::%s] exon coordinates beyond transcript coordinates at %s\n", __func__, t->name);
 	return 0;
 }
