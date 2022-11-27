@@ -145,7 +145,7 @@ int32_t mgf_mrna_gen(mgf_qbuf_t *b, const mgf_gff_t *gff, const mgf_feat_t *f, m
 	else mgf_sprintf_lite(&str, "%ld:", f->lineoff);
 	s = mgf_attr_find(gff, f, "transcript_type");
 	if (s == 0)
-		mgf_attr_find(gff, f, "transcript_biotype");
+		s = mgf_attr_find(gff, f, "transcript_biotype");
 	if (s) mgf_sprintf_lite(&str, "%s", s);
 	t->m_name = str.m, t->name = str.s;
 	return 0;
