@@ -34,7 +34,7 @@ static void mgf_parse_attr(mgf_gff_t *g, mgf_feat_t *f, char *str)
 	}
 }
 
-static void mgf_parse_feat(mgf_gff_t *gff, char *str)
+static void mgf_parse_feat(mgf_gff_t *gff, char *str, int64_t lineoff)
 {
 	int32_t i;
 	char *p, *q;
@@ -45,6 +45,7 @@ static void mgf_parse_feat(mgf_gff_t *gff, char *str)
 		memset(&gff->feat[oldm], 0, sizeof(mgf_feat_t) * (gff->m_feat - oldm));
 	}
 	f = &gff->feat[gff->n_feat++];
+	f->lineoff = lineoff;
 	for (p = q = str, i = 0;; ++p) {
 		if (*p == '\t' || *p == 0) {
 			int32_t c = *p;
@@ -93,7 +94,7 @@ mgf_gff_t *mgf_read_ks(kstream_t *ks)
 			MGF_CALLOC(p->line, str.l + 1);
 			memcpy(p->line, str.s, str.l + 1);
 		} else {
-			mgf_parse_feat(gff, str.s);
+			mgf_parse_feat(gff, str.s, lineoff);
 		}
 		++lineoff;
 	}

@@ -6,8 +6,6 @@
 #include <assert.h>
 #include "mgf-priv.h"
 
-#define kroundup32(x) (--(x), (x)|=(x)>>1, (x)|=(x)>>2, (x)|=(x)>>4, (x)|=(x)>>8, (x)|=(x)>>16, ++(x))
-
 static inline void str_enlarge(kstring_t *s, int l)
 {
 	if (s->l + l + 1 > s->m) {
@@ -132,11 +130,43 @@ void mgf_write_gff_stream(FILE *fp, const mgf_gff_t *gff, int32_t fmt)
 	free(str.s);
 }
 
+void mgf_write_bed12_stream(FILE *fp, const mgf_gff_t *gff)
+{
+	int32_t i, j;
+	kstring_t str = {0,0,0};
+	mgf_qbuf_t *b;
+	mgf_mrna_t t;
+	b = mgf_qbuf_init(gff);
+	mgf_mrna_init(&t);
+	for (i = 0; i < gff->n_feat; ++i) {
+		int32_t ret;
+		const mgf_feat_t *f = &gff->feat[i];
+		if (f->feat != MGF_FEAT_MRNA) continue;
+		ret = mgf_mrna_gen(b, gff, f, &t);
+		if (ret < 0) continue; // error
+		str.l = 0;
+		mgf_sprintf_lite(&str, "%s\t%ld\t%ld\t%s\t0\t%c\t", f->ctg, t.st, t.en, t.name, t.strand < 0? '-' : t.strand > 0? '+' : '.');
+		mgf_sprintf_lite(&str, "%ld\t%ld\t0,0,0\t%d\t", t.st_cds, t.en_cds, t.n_exon);
+		for (j = 0; j < t.n_exon; ++j)
+			mgf_sprintf_lite(&str, "%ld,", t.exon[j].st);
+		mgf_sprintf_lite(&str, "\t");
+		for (j = 0; j < t.n_exon; ++j)
+			mgf_sprintf_lite(&str, "%ld,", t.exon[j].en - t.exon[j].st);
+		mgf_sprintf_lite(&str, "\n");
+		fwrite(str.s, 1, str.l, fp);
+	}
+	free(str.s);
+	mgf_qbuf_destroy(b);
+}
+
 void mgf_write(const char *fn, const mgf_gff_t *gff, int32_t fmt)
 {
 	FILE *fp;
 	fp = fn && strcmp(fn, "-")? fopen(fn, "w") : fdopen(1, "w");
-	mgf_write_gff_stream(fp, gff, fmt);
+	if (fmt == MGF_FMT_GFF3 || fmt == MGF_FMT_GTF)
+		mgf_write_gff_stream(fp, gff, fmt);
+	else if (fmt == MGF_FMT_BED12)
+		mgf_write_bed12_stream(fp, gff);
 	fclose(fp);
 }
 

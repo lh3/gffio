@@ -1,6 +1,7 @@
 #ifndef MGF_PRIV_H
 #define MGF_PRIV_H
 
+#include <stdarg.h>
 #include <stdlib.h>
 #include "minigff.h"
 
@@ -19,6 +20,10 @@
 		} \
 		(a_)[(n_)++] = (v_); \
 	} while (0)
+
+#ifndef kroundup32
+#define kroundup32(x) (--(x), (x)|=(x)>>1, (x)|=(x)>>2, (x)|=(x)>>4, (x)|=(x)>>8, (x)|=(x)>>16, ++(x))
+#endif
 
 #ifndef KSTRING_T
 #define KSTRING_T kstring_t
@@ -51,6 +56,11 @@ void mgf_label(mgf_gff_t *gff);
 void mgf_connect(mgf_gff_t *gff);
 
 const mgf_feat_t **mgf_toposort(const mgf_gff_t *gff);;
+
+void mgf_mrna_init(mgf_mrna_t *t);
+int32_t mgf_mrna_gen(mgf_qbuf_t *b, const mgf_gff_t *gff, const mgf_feat_t *f, mgf_mrna_t *t);
+
+void mgf_sprintf_lite(kstring_t *s, const char *fmt, ...);
 
 #ifdef __cplusplus
 }

@@ -113,7 +113,7 @@ void mgf_label(mgf_gff_t *gff)
 			mgf_add_id_name(gff, f, s_id, s_gid, "ID", "gene_id");
 			mgf_add_id_name(gff, f, s_name, s_gname, "Name", "gene_name");
 		} else if (f->feat_ori == s_trans || f->feat_ori == s_mrna) {
-			f->feat = MGF_FEAT_TRANS;
+			f->feat = MGF_FEAT_MRNA;
 			mgf_add_id_name(gff, f, s_id, s_tid, "ID", "transcript_id");
 			mgf_add_id_name(gff, f, s_name, s_tname, "Name", "transcript_name");
 			mgf_add_parent(gff, f, s_gid, s_par);
