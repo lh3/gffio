@@ -98,7 +98,7 @@ int32_t mgf_mrna_gen(mgf_qbuf_t *b, const mgf_gff_t *gff, const mgf_feat_t *f, m
 		return -3;
 	}
 	t->n_exon = n_exon > n_cds? n_exon : n_cds;
-	t->is_cds = (n_cds > 0);
+	t->has_cds = (n_cds > 0);
 	if (t->n_exon == 0) { // TODO: this can be relaxed
 		if (mgf_verbose >= 2)
 			fprintf(stderr, "[W::%s] no exon associated a transcript\n", __func__);
@@ -110,12 +110,13 @@ int32_t mgf_mrna_gen(mgf_qbuf_t *b, const mgf_gff_t *gff, const mgf_feat_t *f, m
 		MGF_REALLOC(t->exon, t->m_exon);
 	}
 
-	t->st_cds = t->st = INT64_MAX, t->en_cds = t->en = INT64_MIN;
-	t->is_cds = 0, t->strand = f->strand;
+	t->st = f->st, t->en = f->en;
+	t->st_cds = INT64_MAX, t->en_cds = INT64_MIN;
+	t->has_cds = 0, t->strand = f->strand;
 	for (i = j = 0; i < n_fs; ++i) {
 		const mgf_feat_t *e = fs[i];
 		if (e->feat == MGF_FEAT_CDS) {
-			t->is_cds = 1;
+			t->has_cds = 1;
 			t->st_cds = t->st_cds < e->st? t->st_cds : e->st;
 			t->en_cds = t->en_cds > e->en? t->en_cds : e->en;
 		}
@@ -126,7 +127,7 @@ int32_t mgf_mrna_gen(mgf_qbuf_t *b, const mgf_gff_t *gff, const mgf_feat_t *f, m
 		if (e->feat == MGF_FEAT_EXON || (e->feat == MGF_FEAT_CDS && n_exon == 0))
 			t->exon[j].st = e->st, t->exon[j++].en = e->en;
 	}
-	if (!t->is_cds) t->st_cds = t->st, t->en_cds = t->en;
+	if (!t->has_cds) t->st_cds = t->st, t->en_cds = t->en;
 	assert(t->n_exon == n_exon);
 	if (t->n_exon > 1)
 		radix_sort_mgf_intv(t->exon, t->exon + t->n_exon);

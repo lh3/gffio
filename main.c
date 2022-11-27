@@ -46,14 +46,20 @@ int main_gff2bed(int argc, char *argv[])
 	mgf_gff_t *gff;
 	ketopt_t o = KETOPT_INIT;
 	int32_t c, fmt = MGF_FMT_BED12L;
-	while ((c = ketopt(&o, argc, argv, 1, "sv:", 0)) >= 0) {
+	while ((c = ketopt(&o, argc, argv, 1, "sv:eci", 0)) >= 0) {
 		if (c == 'v') mgf_verbose = atoi(o.arg);
 		else if (c == 's') fmt = MGF_FMT_BED12;
+		else if (c == 'e') fmt = MGF_FMT_BED_EXON;
+		else if (c == 'i') fmt = MGF_FMT_BED_INTRON;
+		else if (c == 'c') fmt = MGF_FMT_BED_CDS;
 	}
 	if (o.ind == argc) {
 		fprintf(stderr, "Usage: minigff gff2bed [options] <in.gff>\n");
 		fprintf(stderr, "Options:\n");
 		fprintf(stderr, "  -s        output in BED12 with transcript ID only\n");
+		fprintf(stderr, "  -e        output exons in 6-column BED (aka BED6)\n");
+		fprintf(stderr, "  -i        output introns in BED6\n");
+		fprintf(stderr, "  -c        output CDS in BED6\n");
 		fprintf(stderr, "  -v INT    verbose level [%d]\n", mgf_verbose);
 		return 1;
 	}

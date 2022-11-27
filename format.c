@@ -171,6 +171,44 @@ void mgf_write_bed12_stream(FILE *fp, const mgf_gff_t *gff, int32_t fmt)
 	mgf_qbuf_destroy(b);
 }
 
+void mgf_write_bed6_stream(FILE *fp, const mgf_gff_t *gff, int32_t fmt)
+{
+	int32_t i, j;
+	kstring_t str = {0,0,0};
+	mgf_qbuf_t *b;
+	mgf_mrna_t t;
+	b = mgf_qbuf_init(gff);
+	mgf_mrna_init(&t);
+	for (i = 0; i < gff->n_feat; ++i) {
+		int32_t ret, strand;
+		const mgf_feat_t *f = &gff->feat[i];
+		if (f->feat != MGF_FEAT_MRNA) continue;
+		ret = mgf_mrna_gen(b, gff, f, &t);
+		if (ret < 0) continue; // error
+		str.l = 0;
+		strand = t.strand < 0? '-' : t.strand > 0? '+' : '.';
+		if (fmt == MGF_FMT_BED_EXON) {
+			for (j = 0; j < t.n_exon; ++j)
+				mgf_sprintf_lite(&str, "%s\t%ld\t%ld\t%s\t0\t%c\n", f->ctg, t.exon[j].st, t.exon[j].en, t.name, strand);
+		} else if (fmt == MGF_FMT_BED_INTRON) {
+			for (j = 0; j < t.n_exon - 1; ++j)
+				mgf_sprintf_lite(&str, "%s\t%ld\t%ld\t%s\t0\t%c\n", f->ctg, t.exon[j].en, t.exon[j+1].st, t.name, strand);
+		} else if (fmt == MGF_FMT_BED_CDS && t.has_cds) {
+			for (j = 0; j < t.n_exon; ++j) {
+				int64_t st, en;
+				st = t.exon[j].st > t.st_cds? t.exon[j].st : t.st_cds;
+				en = t.exon[j].en < t.en_cds? t.exon[j].en : t.en_cds;
+				if (st >= en) continue;
+				mgf_sprintf_lite(&str, "%s\t%ld\t%ld\t%s\t0\t%c\n", f->ctg, st, en, t.name, strand);
+			}
+		}
+		if (str.l > 0)
+			fwrite(str.s, 1, str.l, fp);
+	}
+	free(str.s);
+	mgf_qbuf_destroy(b);
+}
+
 void mgf_write(const char *fn, const mgf_gff_t *gff, int32_t fmt)
 {
 	FILE *fp;
@@ -179,6 +217,8 @@ void mgf_write(const char *fn, const mgf_gff_t *gff, int32_t fmt)
 		mgf_write_gff_stream(fp, gff, fmt);
 	else if (fmt == MGF_FMT_BED12 || fmt == MGF_FMT_BED12L)
 		mgf_write_bed12_stream(fp, gff, fmt);
+	else if (fmt == MGF_FMT_BED_EXON || fmt == MGF_FMT_BED_INTRON || fmt == MGF_FMT_BED_CDS)
+		mgf_write_bed6_stream(fp, gff, fmt);
 	fclose(fp);
 }
 

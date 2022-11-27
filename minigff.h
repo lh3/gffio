@@ -3,19 +3,22 @@
 
 #include <stdint.h>
 
-#define MGF_FEAT_NONE    0
-#define MGF_FEAT_GENE    1
-#define MGF_FEAT_MRNA    2
-#define MGF_FEAT_EXON    3
-#define MGF_FEAT_CDS     4
-#define MGF_FEAT_INTRON  5
-#define MGF_FEAT_START   6
-#define MGF_FEAT_STOP    7
+#define MGF_FEAT_NONE      0
+#define MGF_FEAT_GENE      1
+#define MGF_FEAT_MRNA      2
+#define MGF_FEAT_EXON      3
+#define MGF_FEAT_CDS       4
+#define MGF_FEAT_INTRON    5
+#define MGF_FEAT_START     6
+#define MGF_FEAT_STOP      7
 
-#define MGF_FMT_GFF3     1
-#define MGF_FMT_GTF      2
-#define MGF_FMT_BED12    3
-#define MGF_FMT_BED12L   4
+#define MGF_FMT_GFF3       1
+#define MGF_FMT_GTF        2
+#define MGF_FMT_BED12      3
+#define MGF_FMT_BED12L     4
+#define MGF_FMT_BED_EXON   5
+#define MGF_FMT_BED_CDS    6
+#define MGF_FMT_BED_INTRON 7
 
 typedef struct {
 	const char *key, *val;
@@ -61,7 +64,7 @@ typedef struct mgf_qbuf_s mgf_qbuf_t;
 
 typedef struct {
 	int32_t n_exon, m_exon;
-	int32_t strand:16, is_cds:16;
+	int32_t strand:16, has_cds:16;
 	int32_t m_name;
 	int64_t st, en, st_cds, en_cds;
 	char *name;
