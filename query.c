@@ -154,3 +154,112 @@ int32_t mgf_mrna_gen(mgf_qbuf_t *b, const mgf_gff_t *gff, const mgf_feat_t *f, m
 		fprintf(stderr, "[W::%s] exon coordinates beyond transcript coordinates at %s\n", __func__, t->name);
 	return 0;
 }
+
+/*********************
+ * Extract sequences *
+ *********************/
+
+static char *mgf_codon_std = "KNKNTTTTRSRSIIMIQHQHPPPPRRRRLLLLEDEDAAAAGGGGVVVV*Y*YSSSS*CWCLFLFX";
+					// 01234567890123456789012345678901234567890123456789012345678901234
+					// KKNNRRSSTTTTIMIIEEDDGGGGAAAAVVVVQQHHRRRRPPPPLLLL**YY*WCCSSSSLLFFX <- this is the AGCT order
+
+static unsigned char mgf_nt4_table[256] = {
+	0, 1, 2, 3,  4, 4, 4, 4,  4, 4, 4, 4,  4, 4, 4, 4,
+	4, 4, 4, 4,  4, 4, 4, 4,  4, 4, 4, 4,  4, 4, 4, 4,
+	4, 4, 4, 4,  4, 4, 4, 4,  4, 4, 4, 4,  4, 4, 4, 4,
+	4, 4, 4, 4,  4, 4, 4, 4,  4, 4, 4, 4,  4, 4, 4, 4,
+	4, 0, 4, 1,  4, 4, 4, 2,  4, 4, 4, 4,  4, 4, 4, 4,
+	4, 4, 4, 4,  3, 3, 4, 4,  4, 4, 4, 4,  4, 4, 4, 4,
+	4, 0, 4, 1,  4, 4, 4, 2,  4, 4, 4, 4,  4, 4, 4, 4,
+	4, 4, 4, 4,  3, 3, 4, 4,  4, 4, 4, 4,  4, 4, 4, 4,
+	4, 4, 4, 4,  4, 4, 4, 4,  4, 4, 4, 4,  4, 4, 4, 4,
+	4, 4, 4, 4,  4, 4, 4, 4,  4, 4, 4, 4,  4, 4, 4, 4,
+	4, 4, 4, 4,  4, 4, 4, 4,  4, 4, 4, 4,  4, 4, 4, 4,
+	4, 4, 4, 4,  4, 4, 4, 4,  4, 4, 4, 4,  4, 4, 4, 4,
+	4, 4, 4, 4,  4, 4, 4, 4,  4, 4, 4, 4,  4, 4, 4, 4,
+	4, 4, 4, 4,  4, 4, 4, 4,  4, 4, 4, 4,  4, 4, 4, 4,
+	4, 4, 4, 4,  4, 4, 4, 4,  4, 4, 4, 4,  4, 4, 4, 4,
+	4, 4, 4, 4,  4, 4, 4, 4,  4, 4, 4, 4,  4, 4, 4, 4
+};
+
+static char mgf_comp_tab[128] = {
+	  0,   1,	2,	 3,	  4,   5,	6,	 7,	  8,   9,  10,	11,	 12,  13,  14,	15,
+	 16,  17,  18,	19,	 20,  21,  22,	23,	 24,  25,  26,	27,	 28,  29,  30,	31,
+	 32,  33,  34,	35,	 36,  37,  38,	39,	 40,  41,  42,	43,	 44,  45,  46,	47,
+	 48,  49,  50,	51,	 52,  53,  54,	55,	 56,  57,  58,	59,	 60,  61,  62,	63,
+	 64, 'T', 'V', 'G', 'H', 'E', 'F', 'C', 'D', 'I', 'J', 'M', 'L', 'K', 'N', 'O',
+	'P', 'Q', 'Y', 'S', 'A', 'A', 'B', 'W', 'X', 'R', 'Z',	91,	 92,  93,  94,	95,
+	 64, 't', 'v', 'g', 'h', 'e', 'f', 'c', 'd', 'i', 'j', 'm', 'l', 'k', 'n', 'o',
+	'p', 'q', 'y', 's', 'a', 'a', 'b', 'w', 'x', 'r', 'z', 123, 124, 125, 126, 127
+};
+
+static void mgf_revcomp(int32_t len, char *seq)
+{
+	int32_t i;
+	for (i = 0; i < len>>1; ++i) {
+		uint8_t t = seq[len - 1 - i];
+		seq[len - 1 - i] = (uint8_t)seq[i] >= 128? seq[i] : mgf_comp_tab[(uint8_t)seq[i]];
+		seq[i] = t >= 128? t : mgf_comp_tab[t];
+	}
+	if (len&1) seq[i] = (uint8_t)seq[i] >= 128? seq[i] : mgf_comp_tab[(uint8_t)seq[i]];
+}
+
+int32_t mgf_extract_seq(const mgf_gff_t *gff, const mgf_seqs_t *seq, const mgf_mrna_t *t, int32_t fmt, char **str_, int32_t *cap_)
+{
+	int32_t j, len, cap = *cap_, seq_id;
+	char *str = *str_;
+	seq_id = mgf_id_get(seq->h, t->ctg);
+	if (seq_id < 0) return -1; // contig name not found; TODO: add a warning
+	if (t->en > seq->len[seq_id]) return -1; // beyond the end of ctg
+	if (fmt == MGF_FMT_FA_MRNA) {
+		for (j = 0, len = 0; j < t->n_exon; ++j)
+			len += t->exon[j].en - t->exon[j].st;
+	} else if (fmt == MGF_FMT_FA_CDS || fmt == MGF_FMT_FA_PROTEIN) {
+		for (j = 0, len = 0; j < t->n_exon; ++j) {
+			int64_t st, en;
+			st = t->exon[j].st > t->st_cds? t->exon[j].st : t->st_cds;
+			en = t->exon[j].en < t->en_cds? t->exon[j].en : t->en_cds;
+			if (st >= en) continue;
+			len += en - st;
+		}
+	}
+	if (fmt == MGF_FMT_FA_PROTEIN && len % 3 != 0) {
+		if (mgf_verbose >= 2)
+			fprintf(stderr, "[W::%s] CDS length is not a multiple of 3\n", __func__);
+		return -1;
+	}
+	if (len + 1 > cap) {
+		cap = len + 1;
+		kroundup32(cap);
+		MGF_REALLOC(str, cap);
+	}
+	if (fmt == MGF_FMT_FA_MRNA) {
+		for (j = 0, len = 0; j < t->n_exon; ++j) {
+			memcpy(&str[len], &seq->seq[seq_id][t->exon[j].st], t->exon[j].en - t->exon[j].st);
+			len += t->exon[j].en - t->exon[j].st;
+		}
+	} else if (fmt == MGF_FMT_FA_CDS || fmt == MGF_FMT_FA_PROTEIN) {
+		for (j = 0, len = 0; j < t->n_exon; ++j) {
+			int64_t st, en;
+			st = t->exon[j].st > t->st_cds? t->exon[j].st : t->st_cds;
+			en = t->exon[j].en < t->en_cds? t->exon[j].en : t->en_cds;
+			if (st >= en) continue;
+			memcpy(&str[len], &seq->seq[seq_id][st], en - st);
+			len += en - st;
+		}
+	}
+	if (t->strand < 0) mgf_revcomp(len, str);
+	if (fmt == MGF_FMT_FA_PROTEIN) {
+		int32_t j, k;
+		for (j = k = 0; j < len; j += 3) {
+			int32_t c0 = mgf_nt4_table[(uint8_t)str[j]];
+			int32_t c1 = mgf_nt4_table[(uint8_t)str[j+1]];
+			int32_t c2 = mgf_nt4_table[(uint8_t)str[j+2]];
+			str[k++] = c0>3 || c1>3 || c2>3? 'X' : mgf_codon_std[c0<<4|c1<<2|c2];
+		}
+		len = k;
+	}
+	str[len] = 0;
+	*str_ = str, *cap_ = cap;
+	return len;
+}

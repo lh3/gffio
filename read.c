@@ -4,7 +4,7 @@
 #include <zlib.h>
 #include "mgf-priv.h"
 #include "kseq.h"
-KSTREAM_INIT(gzFile, gzread, 0x10000)
+KSEQ_INIT(gzFile, gzread)
 
 static void mgf_parse_attr(mgf_gff_t *g, mgf_feat_t *f, char *str)
 {
@@ -119,6 +119,67 @@ mgf_gff_t *mgf_read(const char *fn)
 
 void mgf_destroy(mgf_gff_t *gff)
 {
+	int32_t i;
+	if (gff == 0) return;
+	for (i = 0; i < gff->n_feat; ++i) {
+		mgf_feat_t *f = &gff->feat[i];
+		free(f->attr); free(f->parent); // f->child is allocated together with parent
+	}
+	free(gff->feat); free(gff->feat_view);
+	for (i = 0; i < gff->n_comm; ++i)
+		free(gff->comm[i].line);
+	free(gff->comm);
+	mgf_id_destroy(gff->dict_id);
+	mgf_dict_destroy(gff->dict);
+	free(gff);
+}
+
+mgf_seqs_t *mgf_seqs_read(const char *fn)
+{
+	gzFile fp;
+	kseq_t *ks;
+	mgf_seqs_t *s;
+	fp = fn || strcmp(fn, "-")? gzopen(fn, "r") : gzdopen(0, "r");
+	if (fp == 0) return 0;
+	ks = kseq_init(fp);
+	MGF_CALLOC(s, 1);
+	s->h = mgf_id_init();
+	while (kseq_read(ks) >= 0) {
+		int32_t absent;
+		char *name;
+		name = mgf_strndup(ks->name.s, ks->name.l);
+		absent = mgf_id_put(s->h, name, s->n_seq);
+		if (!absent) {
+			if (mgf_verbose >= 2)
+				fprintf(stderr, "WARNING: skipped duplicated sequence '%s'\n", name);
+			free(name);
+			continue;
+		}
+		if (s->n_seq == s->m_seq) {
+			s->m_seq += (s->m_seq>>1) + 16;
+			MGF_REALLOC(s->name, s->m_seq);
+			MGF_REALLOC(s->seq, s->m_seq);
+			MGF_REALLOC(s->len, s->m_seq);
+		}
+		s->name[s->n_seq] = name;
+		s->seq[s->n_seq] = mgf_strndup(ks->seq.s, ks->seq.l);
+		s->len[s->n_seq++] = ks->seq.l;
+	}
+	kseq_destroy(ks);
+	gzclose(fp);
+	return s;
+}
+
+void mgf_seqs_destroy(mgf_seqs_t *s)
+{
+	int32_t i;
+	if (s == 0) return;
+	mgf_id_destroy(s->h);
+	for (i = 0; i < s->n_seq; ++i) {
+		free(s->name[i]); free(s->seq[i]);
+	}
+	free(s->name); free(s->seq); free(s->len);
+	free(s);
 }
 
 char **mgf_read_list(const char *o, int *n_) // from gfatools

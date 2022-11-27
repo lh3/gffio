@@ -19,6 +19,9 @@
 #define MGF_FMT_BED_EXON   5
 #define MGF_FMT_BED_CDS    6
 #define MGF_FMT_BED_INTRON 7
+#define MGF_FMT_FA_MRNA    8
+#define MGF_FMT_FA_CDS     9
+#define MGF_FMT_FA_PROTEIN 10
 
 typedef struct {
 	const char *key, *val;
@@ -56,6 +59,13 @@ typedef struct {
 } mgf_gff_t;
 
 typedef struct {
+	int32_t n_seq, m_seq;
+	int64_t *len;
+	char **name, **seq;
+	void *h;
+} mgf_seqs_t;
+
+typedef struct {
 	int64_t st, en;
 } mgf_intv_t;
 
@@ -90,8 +100,12 @@ const mgf_feat_t *mgf_get_by_id(const mgf_gff_t *gff, const char *id);
 mgf_qbuf_t *mgf_qbuf_init(const mgf_gff_t *gff);
 void mgf_qbuf_destroy(mgf_qbuf_t *b);
 const mgf_feat_t **mgf_descend(mgf_qbuf_t *b, const mgf_feat_t *f, int32_t *n);
+int32_t mgf_extract_seq(const mgf_gff_t *gff, const mgf_seqs_t *seq, const mgf_mrna_t *t, int32_t fmt, char **str_, int32_t *cap_);
 
 char **mgf_read_list(const char *o, int *n_);
+
+mgf_seqs_t *mgf_seqs_read(const char *fn);
+void mgf_seqs_destroy(mgf_seqs_t *s);
 
 #ifdef __cplusplus
 }
