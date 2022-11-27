@@ -89,7 +89,12 @@ void mgf_write_gff_comment(FILE *fp, const mgf_gff_t *gff, kstring_t *str)
 void write_feat(kstring_t *str, const mgf_gff_t *gff, const mgf_feat_t *f, int32_t fmt)
 {
 	int32_t i;
-	mgf_sprintf_lite(str, "%s\t%s\t%s\t%ld\t%ld\t", f->ctg, f->src, f->feat_ori, f->st + 1, f->en);
+	mgf_sprintf_lite(str, "%s\t%s\t", f->ctg, f->src);
+	if (f->feat == MGF_FEAT_MRNA) {
+		if (fmt == MGF_FMT_GFF3) mgf_sprintf_lite(str, "mRNA");
+		else mgf_sprintf_lite(str, "transcript");
+	} else mgf_sprintf_lite(str, "%s", f->feat_ori);
+	mgf_sprintf_lite(str, "\t%ld\t%ld\t", f->st + 1, f->en);
 	if (!isnan(f->score)) {
 		char buf[32];
 		snprintf(buf, 32, "%g", f->score);
@@ -98,13 +103,17 @@ void write_feat(kstring_t *str, const mgf_gff_t *gff, const mgf_feat_t *f, int32
 	mgf_sprintf_lite(str, "\t%c", f->strand < 0? '-' : f->strand > 0? '+' : '.');
 	if (f->frame < 0) mgf_sprintf_lite(str, "\t.\t");
 	else mgf_sprintf_lite(str, "\t%d\t", f->frame);
+	if (f->n_attr == 0) mgf_sprintf_lite(str, ".");
 	if (fmt == MGF_FMT_GFF3) {
-		if (f->n_attr == 0) mgf_sprintf_lite(str, ".");
 		for (i = 0; i < f->n_attr; ++i) {
 			mgf_sprintf_lite(str, "%s=%s", f->attr[i].key, f->attr[i].val);
 			if (i != f->n_attr - 1) mgf_sprintf_lite(str, ";");
 		}
 	} else if (fmt == MGF_FMT_GTF) {
+		for (i = 0; i < f->n_attr; ++i) {
+			mgf_sprintf_lite(str, "%s \"%s\";", f->attr[i].key, f->attr[i].val);
+			if (i != f->n_attr - 1) mgf_sprintf_lite(str, " ");
+		}
 	}
 	mgf_sprintf_lite(str, "\n");
 }
