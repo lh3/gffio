@@ -101,7 +101,7 @@ int32_t mgf_mrna_gen(mgf_qbuf_t *b, const mgf_gff_t *gff, const mgf_feat_t *f, m
 	t->has_cds = (n_cds > 0);
 	if (t->n_exon == 0) { // TODO: this can be relaxed
 		if (mgf_verbose >= 2)
-			fprintf(stderr, "[W::%s] no exon associated a transcript\n", __func__);
+			fprintf(stderr, "[W::%s] no exon associated with a transcript\n", __func__);
 		return -4;
 	}
 	if (t->n_exon > t->m_exon) {

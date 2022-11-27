@@ -48,7 +48,7 @@ int main_gff2bed(int argc, char *argv[])
 	int32_t c, fmt = MGF_FMT_BED12L;
 	while ((c = ketopt(&o, argc, argv, 1, "sv:eci", 0)) >= 0) {
 		if (c == 'v') mgf_verbose = atoi(o.arg);
-		else if (c == 's') fmt = MGF_FMT_BED12;
+		else if (c == 's') fmt = MGF_FMT_BED12S;
 		else if (c == 'e') fmt = MGF_FMT_BED_EXON;
 		else if (c == 'i') fmt = MGF_FMT_BED_INTRON;
 		else if (c == 'c') fmt = MGF_FMT_BED_CDS;

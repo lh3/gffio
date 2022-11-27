@@ -215,7 +215,7 @@ void mgf_write(const char *fn, const mgf_gff_t *gff, int32_t fmt)
 	fp = fn && strcmp(fn, "-")? fopen(fn, "w") : fdopen(1, "w");
 	if (fmt == MGF_FMT_GFF3 || fmt == MGF_FMT_GTF)
 		mgf_write_gff_stream(fp, gff, fmt);
-	else if (fmt == MGF_FMT_BED12 || fmt == MGF_FMT_BED12L)
+	else if (fmt == MGF_FMT_BED12S || fmt == MGF_FMT_BED12L)
 		mgf_write_bed12_stream(fp, gff, fmt);
 	else if (fmt == MGF_FMT_BED_EXON || fmt == MGF_FMT_BED_INTRON || fmt == MGF_FMT_BED_CDS)
 		mgf_write_bed6_stream(fp, gff, fmt);

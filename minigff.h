@@ -14,8 +14,8 @@
 
 #define MGF_FMT_GFF3       1
 #define MGF_FMT_GTF        2
-#define MGF_FMT_BED12      3
-#define MGF_FMT_BED12L     4
+#define MGF_FMT_BED12L     3
+#define MGF_FMT_BED12S     4
 #define MGF_FMT_BED_EXON   5
 #define MGF_FMT_BED_CDS    6
 #define MGF_FMT_BED_INTRON 7
