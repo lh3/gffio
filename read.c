@@ -109,7 +109,7 @@ mgf_gff_t *mgf_read(const char *fn)
 	gzFile fp;
 	kstream_t *ks;
 	mgf_gff_t *gff;
-	fp = fn || strcmp(fn, "-")? gzopen(fn, "r") : gzdopen(0, "r");
+	fp = fn && strcmp(fn, "-")? gzopen(fn, "r") : gzdopen(0, "r");
 	if (fp == 0) return 0;
 	ks = ks_init(fp);
 	gff = mgf_read_ks(ks);
@@ -140,7 +140,7 @@ mgf_seqs_t *mgf_seqs_read(const char *fn)
 	gzFile fp;
 	kseq_t *ks;
 	mgf_seqs_t *s;
-	fp = fn || strcmp(fn, "-")? gzopen(fn, "r") : gzdopen(0, "r");
+	fp = fn && strcmp(fn, "-")? gzopen(fn, "r") : gzdopen(0, "r");
 	if (fp == 0) return 0;
 	ks = kseq_init(fp);
 	MGF_CALLOC(s, 1);
