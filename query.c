@@ -82,6 +82,7 @@ int32_t mgf_mrna_gen(mgf_qbuf_t *b, const mgf_gff_t *gff, const mgf_feat_t *f, m
 
 	if (f == 0 || f->feat != MGF_FEAT_MRNA) return -1; // only looking at mRNA or transcript
 	fs = mgf_descend(b, f, &n_fs);
+	if (n_fs == 0) return -1; // not retrieved anything
 	for (i = 1; i < n_fs; ++i)
 		if (fs[i]->ctg != fs[0]->ctg)
 			break;
@@ -103,7 +104,7 @@ int32_t mgf_mrna_gen(mgf_qbuf_t *b, const mgf_gff_t *gff, const mgf_feat_t *f, m
 		return -3;
 	}
 	t->n_exon = n_exon > n_cds? n_exon : n_cds;
-	t->has_cds = (n_cds > 0);
+	t->has_cds = (n_cds > 0), t->frame = 0;
 	if (t->n_exon == 0) { // TODO: this can be relaxed
 		if (mgf_verbose >= 2)
 			fprintf(stderr, "[W::%s] no exon associated with a transcript\n", __func__);
@@ -113,6 +114,20 @@ int32_t mgf_mrna_gen(mgf_qbuf_t *b, const mgf_gff_t *gff, const mgf_feat_t *f, m
 		t->m_exon = t->n_exon;
 		kroundup32(t->m_exon);
 		MGF_REALLOC(t->exon, t->m_exon);
+	}
+
+	if (t->has_cds) {
+		const mgf_feat_t *c0 = 0, *c1 = 0;
+		for (i = 0; i < n_fs; ++i) {
+			if (fs[i]->feat != MGF_FEAT_CDS) continue;
+			if (c0 == 0 || c1 == 0) c0 = c1 = fs[i];
+			if (fs[i]->st < c0->st) c0 = fs[i];
+			if (fs[i]->en > c1->en) c1 = fs[i];
+		}
+		if (f->strand > 0 && c0->frame >= 0)
+			t->frame = c0->frame;
+		else if (f->strand < 0 && c1->frame >= 0)
+			t->frame = c1->frame;
 	}
 
 	t->st = f->st, t->en = f->en;
@@ -148,6 +163,7 @@ int32_t mgf_mrna_gen(mgf_qbuf_t *b, const mgf_gff_t *gff, const mgf_feat_t *f, m
 	}
 	if (f->id) mgf_sprintf_lite(&str, "%s:", f->id);
 	else mgf_sprintf_lite(&str, "%ld:", f->lineoff);
+	mgf_sprintf_lite(&str, "%d:", t->frame);
 	s = mgf_attr_find(gff, f, "transcript_type");
 	if (s == 0)
 		s = mgf_attr_find(gff, f, "transcript_biotype");
@@ -253,7 +269,7 @@ int32_t mgf_extract_seq(const mgf_gff_t *gff, const mgf_seqs_t *seq, const mgf_m
 	if (t->strand < 0) mgf_revcomp(len, str);
 	if (fmt == MGF_FMT_FA_PROTEIN) {
 		int32_t j, k;
-		for (j = k = 0; j + 2 < len; j += 3) {
+		for (j = t->frame, k = 0; j + 2 < len; j += 3) {
 			int32_t c0 = mgf_nt4_table[(uint8_t)str[j]];
 			int32_t c1 = mgf_nt4_table[(uint8_t)str[j+1]];
 			int32_t c2 = mgf_nt4_table[(uint8_t)str[j+2]];
