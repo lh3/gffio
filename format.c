@@ -167,6 +167,7 @@ void mgf_write_bed12_stream(FILE *fp, const mgf_gff_t *gff, int32_t fmt)
 		mgf_sprintf_lite(&str, "\n");
 		fwrite(str.s, 1, str.l, fp);
 	}
+	mgf_mrna_free(&t);
 	free(str.s);
 	mgf_qbuf_destroy(b);
 }
@@ -205,6 +206,7 @@ void mgf_write_bed6_stream(FILE *fp, const mgf_gff_t *gff, int32_t fmt)
 		if (str.l > 0)
 			fwrite(str.s, 1, str.l, fp);
 	}
+	mgf_mrna_free(&t);
 	free(str.s);
 	mgf_qbuf_destroy(b);
 }
@@ -250,5 +252,40 @@ void mgf_write_list(const char *fn, const mgf_gff_t *gff, int32_t fmt, int32_t n
 		}
 	}
 	mgf_qbuf_destroy(b);
+	fclose(fp);
+}
+
+void mgf_write_fasta_stream(FILE *fp, const mgf_gff_t *gff, const mgf_seqs_t *seq, int32_t fmt)
+{
+	int32_t i, cap = 0;
+	char *s = 0;
+	kstring_t str = {0,0,0};
+	mgf_qbuf_t *b;
+	mgf_mrna_t t;
+	b = mgf_qbuf_init(gff);
+	mgf_mrna_init(&t);
+	for (i = 0; i < gff->n_feat; ++i) {
+		int32_t ret;
+		const mgf_feat_t *f = &gff->feat[i];
+		if (f->feat != MGF_FEAT_MRNA) continue;
+		ret = mgf_mrna_gen(b, gff, f, &t);
+		if (ret < 0) continue; // error
+		ret = mgf_extract_seq(gff, seq, &t, fmt, &s, &cap);
+		if (ret < 0) continue; // error
+		str.l = 0;
+		mgf_sprintf_lite(&str, ">%s\n%s\n", t.name, s);
+		fwrite(str.s, 1, str.l, fp);
+	}
+	mgf_mrna_free(&t);
+	free(str.s);
+	mgf_qbuf_destroy(b);
+}
+
+void mgf_write_fasta(const char *fn, const mgf_gff_t *gff, const mgf_seqs_t *seq, int32_t fmt)
+{
+	FILE *fp;
+	fp = fn && strcmp(fn, "-")? fopen(fn, "w") : fdopen(1, "w");
+	if (fmt == MGF_FMT_FA_MRNA || fmt == MGF_FMT_FA_CDS || fmt == MGF_FMT_FA_PROTEIN)
+		mgf_write_fasta_stream(fp, gff, seq, fmt);
 	fclose(fp);
 }

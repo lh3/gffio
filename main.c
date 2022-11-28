@@ -69,12 +69,38 @@ int main_gff2bed(int argc, char *argv[])
 	return 0;
 }
 
+int main_gff2fa(int argc, char *argv[])
+{
+	mgf_gff_t *gff;
+	ketopt_t o = KETOPT_INIT;
+	int32_t c, fmt = MGF_FMT_FA_MRNA;
+	while ((c = ketopt(&o, argc, argv, 1, "v:tcp", 0)) >= 0) {
+		if (c == 'v') mgf_verbose = atoi(o.arg);
+		else if (c == 't') fmt = MGF_FMT_FA_MRNA;
+		else if (c == 'c') fmt = MGF_FMT_FA_CDS;
+		else if (c == 'p') fmt = MGF_FMT_FA_PROTEIN;
+	}
+	if (argc - o.ind < 2) {
+		fprintf(stderr, "Usage: minigff gff2fa [options] <in.gff> <ref.fa>\n");
+		fprintf(stderr, "Options:\n");
+		fprintf(stderr, "  -c        extract CDS (mRNA/transcript by default)\n");
+		fprintf(stderr, "  -p        extract protein sequences\n");
+		fprintf(stderr, "  -v INT    verbose level [%d]\n", mgf_verbose);
+		return 1;
+	}
+	gff = mgf_read(argv[o.ind]);
+	mgf_write(0, gff, fmt);
+	mgf_destroy(gff);
+	return 0;
+}
+
 static int usage(FILE *fp)
 {
 	fprintf(fp, "Usage: minigff <command> <arguments>\n");
 	fprintf(fp, "Commands:\n");
 	fprintf(fp, "  view      read GFF3/GTF\n");
 	fprintf(fp, "  gff2bed   convert GFF3/GTF to BED\n");
+	fprintf(fp, "  gff2fa    extract sequences\n");
 	return 1;
 }
 
@@ -83,6 +109,7 @@ int main(int argc, char *argv[])
 	if (argc < 2) return usage(stderr);
 	if (strcmp(argv[1], "view") == 0) return main_view(argc-1, argv+1);
 	else if (strcmp(argv[1], "gff2bed") == 0) return main_gff2bed(argc-1, argv+1);
+	else if (strcmp(argv[1], "gff2fa") == 0) return main_gff2fa(argc-1, argv+1);
 	else {
 		fprintf(stderr, "ERROR: unrecognized command '%s'\n", argv[1]);
 		return 1;

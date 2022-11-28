@@ -59,6 +59,7 @@ const mgf_feat_t **mgf_toposort(const mgf_gff_t *gff);;
 
 void mgf_mrna_init(mgf_mrna_t *t);
 int32_t mgf_mrna_gen(mgf_qbuf_t *b, const mgf_gff_t *gff, const mgf_feat_t *f, mgf_mrna_t *t);
+void mgf_mrna_free(mgf_mrna_t *t);
 
 void mgf_sprintf_lite(kstring_t *s, const char *fmt, ...);
 

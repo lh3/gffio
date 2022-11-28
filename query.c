@@ -68,6 +68,11 @@ void mgf_mrna_init(mgf_mrna_t *t)
 	memset(t, 0, sizeof(*t));
 }
 
+void mgf_mrna_free(mgf_mrna_t *t)
+{
+	free(t->name); free(t->exon);
+}
+
 int32_t mgf_mrna_gen(mgf_qbuf_t *b, const mgf_gff_t *gff, const mgf_feat_t *f, mgf_mrna_t *t)
 {
 	int32_t i, j, n_fs, n_exon, n_cds;
