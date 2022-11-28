@@ -82,7 +82,7 @@ static void mgf_build_id_dict(mgf_gff_t *gff)
 		}
 	}
 	if (n_dup > 0 && mgf_verbose >= 2)
-		fprintf(stderr, "WARNING: there are duplicated IDs\n");
+		fprintf(stderr, "WARNING: there are duplicated IDs. Please use -v4 to see details.\n");
 }
 
 void mgf_label(mgf_gff_t *gff)

@@ -72,6 +72,7 @@ int main_gff2bed(int argc, char *argv[])
 int main_gff2fa(int argc, char *argv[])
 {
 	mgf_gff_t *gff;
+	mgf_seqs_t *seq;
 	ketopt_t o = KETOPT_INIT;
 	int32_t c, fmt = MGF_FMT_FA_MRNA;
 	while ((c = ketopt(&o, argc, argv, 1, "v:tcp", 0)) >= 0) {
@@ -89,7 +90,9 @@ int main_gff2fa(int argc, char *argv[])
 		return 1;
 	}
 	gff = mgf_read(argv[o.ind]);
-	mgf_write(0, gff, fmt);
+	seq = mgf_seqs_read(argv[o.ind+1]);
+	mgf_write_fasta(0, gff, seq, fmt);
+	mgf_seqs_destroy(seq);
 	mgf_destroy(gff);
 	return 0;
 }

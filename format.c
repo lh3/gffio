@@ -214,7 +214,7 @@ void mgf_write_bed6_stream(FILE *fp, const mgf_gff_t *gff, int32_t fmt)
 void mgf_write(const char *fn, const mgf_gff_t *gff, int32_t fmt)
 {
 	FILE *fp;
-	fp = fn && strcmp(fn, "-")? fopen(fn, "w") : fdopen(1, "w");
+	fp = fn && strcmp(fn, "-")? fopen(fn, "w") : stdout;
 	if (fmt == MGF_FMT_GFF3 || fmt == MGF_FMT_GTF)
 		mgf_write_gff_stream(fp, gff, fmt);
 	else if (fmt == MGF_FMT_BED12S || fmt == MGF_FMT_BED12L)
@@ -231,7 +231,7 @@ void mgf_write_list(const char *fn, const mgf_gff_t *gff, int32_t fmt, int32_t n
 	mgf_qbuf_t *b;
 	FILE *fp;
 	if (n <= 0) return;
-	fp = fn && strcmp(fn, "-")? fopen(fn, "w") : fdopen(1, "w");
+	fp = fn && strcmp(fn, "-")? fopen(fn, "w") : stdout;
 	assert(fp);
 	b = mgf_qbuf_init(gff);
 	for (i = 0; i < n; ++i) {
@@ -276,15 +276,15 @@ void mgf_write_fasta_stream(FILE *fp, const mgf_gff_t *gff, const mgf_seqs_t *se
 		mgf_sprintf_lite(&str, ">%s\n%s\n", t.name, s);
 		fwrite(str.s, 1, str.l, fp);
 	}
+	free(s); free(str.s);
 	mgf_mrna_free(&t);
-	free(str.s);
 	mgf_qbuf_destroy(b);
 }
 
 void mgf_write_fasta(const char *fn, const mgf_gff_t *gff, const mgf_seqs_t *seq, int32_t fmt)
 {
 	FILE *fp;
-	fp = fn && strcmp(fn, "-")? fopen(fn, "w") : fdopen(1, "w");
+	fp = fn && strcmp(fn, "-")? fopen(fn, "w") : stdout;
 	if (fmt == MGF_FMT_FA_MRNA || fmt == MGF_FMT_FA_CDS || fmt == MGF_FMT_FA_PROTEIN)
 		mgf_write_fasta_stream(fp, gff, seq, fmt);
 	fclose(fp);

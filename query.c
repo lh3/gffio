@@ -117,11 +117,10 @@ int32_t mgf_mrna_gen(mgf_qbuf_t *b, const mgf_gff_t *gff, const mgf_feat_t *f, m
 
 	t->st = f->st, t->en = f->en;
 	t->st_cds = INT64_MAX, t->en_cds = INT64_MIN;
-	t->has_cds = 0, t->strand = f->strand;
+	t->strand = f->strand, t->ctg = f->ctg;
 	for (i = j = 0; i < n_fs; ++i) {
 		const mgf_feat_t *e = fs[i];
 		if (e->feat == MGF_FEAT_CDS) {
-			t->has_cds = 1;
 			t->st_cds = t->st_cds < e->st? t->st_cds : e->st;
 			t->en_cds = t->en_cds > e->en? t->en_cds : e->en;
 		}
@@ -211,8 +210,9 @@ static void mgf_revcomp(int32_t len, char *seq)
 
 int32_t mgf_extract_seq(const mgf_gff_t *gff, const mgf_seqs_t *seq, const mgf_mrna_t *t, int32_t fmt, char **str_, int32_t *cap_)
 {
-	int32_t j, len, cap = *cap_, seq_id;
+	int32_t j, len = 0, cap = *cap_, seq_id;
 	char *str = *str_;
+	if ((fmt == MGF_FMT_FA_CDS || fmt == MGF_FMT_FA_PROTEIN) && t->has_cds == 0) return -1; // no CDS
 	seq_id = mgf_id_get(seq->h, t->ctg);
 	if (seq_id < 0) return -1; // contig name not found; TODO: add a warning
 	if (t->en > seq->len[seq_id]) return -1; // beyond the end of ctg
@@ -227,12 +227,9 @@ int32_t mgf_extract_seq(const mgf_gff_t *gff, const mgf_seqs_t *seq, const mgf_m
 			if (st >= en) continue;
 			len += en - st;
 		}
-	}
-	if (fmt == MGF_FMT_FA_PROTEIN && len % 3 != 0) {
-		if (mgf_verbose >= 2)
-			fprintf(stderr, "[W::%s] CDS length is not a multiple of 3\n", __func__);
-		return -1;
-	}
+	} else abort();
+	if (fmt == MGF_FMT_FA_PROTEIN && len % 3 != 0 && mgf_verbose >= 2)
+		fprintf(stderr, "[W::%s] the length of %s CDS is not a multiple of 3\n", __func__, t->name);
 	if (len + 1 > cap) {
 		cap = len + 1;
 		kroundup32(cap);
@@ -256,7 +253,7 @@ int32_t mgf_extract_seq(const mgf_gff_t *gff, const mgf_seqs_t *seq, const mgf_m
 	if (t->strand < 0) mgf_revcomp(len, str);
 	if (fmt == MGF_FMT_FA_PROTEIN) {
 		int32_t j, k;
-		for (j = k = 0; j < len; j += 3) {
+		for (j = k = 0; j + 2 < len; j += 3) {
 			int32_t c0 = mgf_nt4_table[(uint8_t)str[j]];
 			int32_t c1 = mgf_nt4_table[(uint8_t)str[j+1]];
 			int32_t c2 = mgf_nt4_table[(uint8_t)str[j+2]];

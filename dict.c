@@ -1,6 +1,5 @@
 #include "mgf-priv.h"
 #include "khashl.h"
-
 KHASHL_CMAP_INIT(KH_LOCAL, mgf_strhash_t, mgf_sh, const char*, int32_t, kh_hash_str, kh_eq_str)
 
 struct mgf_dict_s {

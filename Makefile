@@ -10,7 +10,7 @@ LIBS=		-lz -lm
 
 ifneq ($(asan),)
 	CFLAGS+=-fsanitize=address
-	LIBS+=-fsanitize=address -ldl -lm
+	LIBS+=-fsanitize=address -ldl -lpthread
 endif
 
 .SUFFIXES:.c .cpp .o
@@ -39,6 +39,6 @@ dict.o: mgf-priv.h minigff.h khashl.h
 format.o: mgf-priv.h minigff.h
 kagraph.o: kagraph.h
 main.o: minigff.h ketopt.h
-query.o: mgf-priv.h minigff.h
+query.o: mgf-priv.h minigff.h ksort.h
 read.o: mgf-priv.h minigff.h kseq.h
 regular.o: mgf-priv.h minigff.h kagraph.h
