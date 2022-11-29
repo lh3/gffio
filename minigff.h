@@ -74,7 +74,7 @@ typedef struct mgf_qbuf_s mgf_qbuf_t;
 
 typedef struct {
 	int32_t n_exon, m_exon;
-	int32_t strand:16, has_cds:8, frame:8;
+	int32_t err:16, strand:2, has_cds:2, has_start:2, has_stop:2, cds_fixed:2, frame:6;
 	int32_t m_name;
 	int64_t st, en, st_cds, en_cds;
 	char *name;

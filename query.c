@@ -73,6 +73,40 @@ void mgf_mrna_free(mgf_mrna_t *t)
 	free(t->name); free(t->exon);
 }
 
+static void mgf_mrna_fix_cds(mgf_mrna_t *t) // require sorting and ->frame correctly set
+{
+	int32_t j, j0 = -1, j1 = -1, cds_len, s0, s1, tmp;
+	for (j = 0, cds_len = 0; j < t->n_exon; ++j) {
+		const mgf_intv_t *e = &t->exon[j];
+		int64_t st, en;
+		if (t->st_cds >= e->st && t->st_cds < e->en) j0 = j;
+		if (t->en_cds > e->st && t->en_cds <= e->en) j1 = j;
+		st = e->st > t->st_cds? e->st : t->st_cds;
+		en = e->en < t->en_cds? e->en : t->en_cds;
+		if (st >= en) continue;
+		cds_len += en - st;
+	}
+	s0 = t->frame, s1 = (cds_len - t->frame) % 3;
+	if (j0 >= 0 && j1 >= 0 && (s0 > 0 || s1 > 0)) {
+		if (t->strand < 0) tmp = s0, s0 = s1, s1 = tmp;
+		if (t->st_cds + s0 >= t->exon[j0].en) {
+			if (j0 + 1 < t->n_exon)
+				t->st_cds = t->exon[j0+1].st + (t->st_cds + s0 - t->exon[j0].en);
+			else t->err |= 1;
+		} else t->st_cds += s0;
+		if (t->en_cds - s1 <= t->exon[j1].st) {
+			if (j1 - 1 >= 0)
+				t->en_cds = t->exon[j1-1].en - (t->exon[j1].st - t->en_cds + s1);
+			else t->err |= 2;
+		} else t->en_cds -= s1;
+		if ((t->err & 3) == 0) t->cds_fixed = 1;
+	} else if (j0 < 0 || j1 < 0) {
+		t->err |= 4;
+		if (mgf_verbose >= 2)
+			fprintf(stderr, "[W::%s] CDS start or end not in exons\n", __func__);
+	}
+}
+
 int32_t mgf_mrna_gen(mgf_qbuf_t *b, const mgf_gff_t *gff, const mgf_feat_t *f, mgf_mrna_t *t)
 {
 	int32_t i, j, n_fs, n_exon, n_cds;
@@ -80,6 +114,7 @@ int32_t mgf_mrna_gen(mgf_qbuf_t *b, const mgf_gff_t *gff, const mgf_feat_t *f, m
 	const char *s;
 	kstring_t str = {0,0,0};
 
+	t->err = 0;
 	if (f == 0 || f->feat != MGF_FEAT_MRNA) return -1; // only looking at mRNA or transcript
 	fs = mgf_descend(b, f, &n_fs);
 	if (n_fs == 0) return -1; // not retrieved anything
@@ -104,7 +139,7 @@ int32_t mgf_mrna_gen(mgf_qbuf_t *b, const mgf_gff_t *gff, const mgf_feat_t *f, m
 		return -3;
 	}
 	t->n_exon = n_exon > n_cds? n_exon : n_cds;
-	t->has_cds = (n_cds > 0), t->frame = 0;
+	t->has_cds = (n_cds > 0), t->frame = 0, t->has_start = 0, t->has_stop = 0;
 	if (t->n_exon == 0) { // TODO: this can be relaxed
 		if (mgf_verbose >= 2)
 			fprintf(stderr, "[W::%s] no exon associated with a transcript\n", __func__);
@@ -119,6 +154,8 @@ int32_t mgf_mrna_gen(mgf_qbuf_t *b, const mgf_gff_t *gff, const mgf_feat_t *f, m
 	if (t->has_cds) {
 		const mgf_feat_t *c0 = 0, *c1 = 0;
 		for (i = 0; i < n_fs; ++i) {
+			if (fs[i]->feat == MGF_FEAT_START) t->has_start = 1;
+			if (fs[i]->feat == MGF_FEAT_STOP)  t->has_stop  = 1;
 			if (fs[i]->feat != MGF_FEAT_CDS) continue;
 			if (c0 == 0 || c1 == 0) c0 = c1 = fs[i];
 			if (fs[i]->st < c0->st) c0 = fs[i];
@@ -163,12 +200,13 @@ int32_t mgf_mrna_gen(mgf_qbuf_t *b, const mgf_gff_t *gff, const mgf_feat_t *f, m
 	}
 	if (f->id) mgf_sprintf_lite(&str, "%s:", f->id);
 	else mgf_sprintf_lite(&str, "%ld:", f->lineoff);
-	mgf_sprintf_lite(&str, "%d:", t->frame);
 	s = mgf_attr_find(gff, f, "transcript_type");
 	if (s == 0)
 		s = mgf_attr_find(gff, f, "transcript_biotype");
 	if (s) mgf_sprintf_lite(&str, "%s", s);
 	t->m_name = str.m, t->name = str.s;
+
+	if (t->has_cds) mgf_mrna_fix_cds(t);
 
 	if ((t->st < f->st || t->en > f->en) && mgf_verbose >= 2)
 		fprintf(stderr, "[W::%s] exon coordinates beyond transcript coordinates at %s\n", __func__, t->name);
@@ -244,8 +282,7 @@ int32_t mgf_extract_seq(const mgf_gff_t *gff, const mgf_seqs_t *seq, const mgf_m
 			len += en - st;
 		}
 	} else abort();
-	if (fmt == MGF_FMT_FA_PROTEIN && (len - t->frame) % 3 != 0 && mgf_verbose >= 2)
-		fprintf(stderr, "[W::%s] the length of %s CDS is not a multiple of 3\n", __func__, t->name);
+	assert(fmt != MGF_FMT_FA_PROTEIN || len % 3 == 0);
 	if (len + 1 > cap) {
 		cap = len + 1;
 		kroundup32(cap);
@@ -269,7 +306,7 @@ int32_t mgf_extract_seq(const mgf_gff_t *gff, const mgf_seqs_t *seq, const mgf_m
 	if (t->strand < 0) mgf_revcomp(len, str);
 	if (fmt == MGF_FMT_FA_PROTEIN) {
 		int32_t j, k;
-		for (j = t->frame, k = 0; j + 2 < len; j += 3) {
+		for (j = 0, k = 0; j + 2 < len; j += 3) {
 			int32_t c0 = mgf_nt4_table[(uint8_t)str[j]];
 			int32_t c1 = mgf_nt4_table[(uint8_t)str[j+1]];
 			int32_t c2 = mgf_nt4_table[(uint8_t)str[j+2]];
