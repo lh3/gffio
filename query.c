@@ -244,7 +244,7 @@ int32_t mgf_extract_seq(const mgf_gff_t *gff, const mgf_seqs_t *seq, const mgf_m
 			len += en - st;
 		}
 	} else abort();
-	if (fmt == MGF_FMT_FA_PROTEIN && len % 3 != 0 && mgf_verbose >= 2)
+	if (fmt == MGF_FMT_FA_PROTEIN && (len - t->frame) % 3 != 0 && mgf_verbose >= 2)
 		fprintf(stderr, "[W::%s] the length of %s CDS is not a multiple of 3\n", __func__, t->name);
 	if (len + 1 > cap) {
 		cap = len + 1;
