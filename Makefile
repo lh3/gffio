@@ -5,7 +5,7 @@ CXXFLAGS=	$(CFLAGS)
 CPPFLAGS=
 INCLUDES=
 OBJS=		kagraph.o dict.o regular.o query.o read.o format.o
-PROG=		minigff
+PROG=		gffio
 LIBS=		-lz -lm
 
 ifneq ($(asan),)
@@ -24,7 +24,7 @@ endif
 
 all:$(PROG)
 
-minigff:$(OBJS) main.o
+gffio:$(OBJS) main.o
 		$(CC) $(CFLAGS) $^ -o $@ $(LIBS)
 
 clean:
@@ -35,10 +35,9 @@ depend:
 
 # DO NOT DELETE
 
-dict.o: mgf-priv.h minigff.h khashl.h
-format.o: mgf-priv.h minigff.h
+dict.o: gfpriv.h gffio.h khashl.h
 kagraph.o: kagraph.h
-main.o: minigff.h ketopt.h
-query.o: mgf-priv.h minigff.h ksort.h
-read.o: mgf-priv.h minigff.h kseq.h
-regular.o: mgf-priv.h minigff.h kagraph.h
+main.o: gffio.h ketopt.h
+query.o: ksort.h
+read.o: kseq.h
+regular.o: gfpriv.h gffio.h kagraph.h

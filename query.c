@@ -1,53 +1,53 @@
 #include <stdio.h>
 #include <string.h>
-#include "mgf-priv.h"
+#include "gfpriv.h"
 #include "ksort.h"
 
 /***************************
  * Query descendants by ID *
  ***************************/
 
-struct mgf_qbuf_s {
+struct gf_qbuf_s {
 	int32_t ns, ms, nf, mf;
-	const mgf_feat_t **stack, **rst;
+	const gf_feat_t **stack, **rst;
 	int8_t *flag;
-	const mgf_gff_t *gff;
+	const gf_gff_t *gff;
 };
 
-const mgf_feat_t *mgf_get_by_id(const mgf_gff_t *gff, const char *id)
+const gf_feat_t *gf_get_by_id(const gf_gff_t *gff, const char *id)
 {
 	int32_t k;
-	k = mgf_id_get(gff->dict_id, id);
+	k = gf_id_get(gff->dict_id, id);
 	return k < 0? 0 : &gff->feat[k];
 }
 
-mgf_qbuf_t *mgf_qbuf_init(const mgf_gff_t *gff)
+gf_qbuf_t *gf_qbuf_init(const gf_gff_t *gff)
 {
-	mgf_qbuf_t *b;
-	MGF_CALLOC(b, 1);
+	gf_qbuf_t *b;
+	GF_CALLOC(b, 1);
 	b->gff = gff;
-	MGF_CALLOC(b->flag, b->gff->n_feat);
+	GF_CALLOC(b->flag, b->gff->n_feat);
 	return b;
 }
 
-void mgf_qbuf_destroy(mgf_qbuf_t *b)
+void gf_qbuf_destroy(gf_qbuf_t *b)
 {
 	free(b->stack); free(b->rst); free(b->flag); free(b);
 }
 
-const mgf_feat_t **mgf_descend(mgf_qbuf_t *b, const mgf_feat_t *f, int32_t *n)
+const gf_feat_t **gf_descend(gf_qbuf_t *b, const gf_feat_t *f, int32_t *n)
 {
 	int32_t i;
 	b->nf = 0;
-	MGF_PUSH_BACK(b->ns, b->ms, b->stack, f);
+	GF_PUSH_BACK(b->ns, b->ms, b->stack, f);
 	while (b->ns > 0) {
 		f = b->stack[--b->ns];
-		MGF_PUSH_BACK(b->nf, b->mf, b->rst, f);
+		GF_PUSH_BACK(b->nf, b->mf, b->rst, f);
 		for (i = f->n_child - 1; i >= 0; --i) {
-			const mgf_feat_t *g = f->child[i];
+			const gf_feat_t *g = f->child[i];
 			int32_t v = g - b->gff->feat;
 			if (!b->flag[v])
-				MGF_PUSH_BACK(b->ns, b->ms, b->stack, g);
+				GF_PUSH_BACK(b->ns, b->ms, b->stack, g);
 		}
 	}
 	for (i = 0; i < b->nf; ++i)
@@ -61,23 +61,23 @@ const mgf_feat_t **mgf_descend(mgf_qbuf_t *b, const mgf_feat_t *f, int32_t *n)
  ***********************/
 
 #define intv_key(x) ((x).st)
-KRADIX_SORT_INIT(mgf_intv, mgf_intv_t, intv_key, 8)
+KRADIX_SORT_INIT(gf_intv, gf_intv_t, intv_key, 8)
 
-void mgf_mrna_init(mgf_mrna_t *t)
+void gf_mrna_init(gf_mrna_t *t)
 {
 	memset(t, 0, sizeof(*t));
 }
 
-void mgf_mrna_free(mgf_mrna_t *t)
+void gf_mrna_free(gf_mrna_t *t)
 {
 	free(t->name); free(t->exon);
 }
 
-static void mgf_mrna_fix_cds(mgf_mrna_t *t) // require sorting and ->frame correctly set
+static void gf_mrna_fix_cds(gf_mrna_t *t) // require sorting and ->frame correctly set
 {
 	int32_t j, j0 = -1, j1 = -1, cds_len, s0, s1, tmp;
 	for (j = 0, cds_len = 0; j < t->n_exon; ++j) {
-		const mgf_intv_t *e = &t->exon[j];
+		const gf_intv_t *e = &t->exon[j];
 		int64_t st, en;
 		if (t->st_cds >= e->st && t->st_cds < e->en) j0 = j;
 		if (t->en_cds > e->st && t->en_cds <= e->en) j1 = j;
@@ -102,61 +102,61 @@ static void mgf_mrna_fix_cds(mgf_mrna_t *t) // require sorting and ->frame corre
 		if ((t->err & 3) == 0) t->cds_fixed = 1;
 	} else if (j0 < 0 || j1 < 0) {
 		t->err |= 4;
-		if (mgf_verbose >= 2)
+		if (gf_verbose >= 2)
 			fprintf(stderr, "[W::%s] CDS start or end not in exons\n", __func__);
 	}
 }
 
-int32_t mgf_mrna_gen(mgf_qbuf_t *b, const mgf_gff_t *gff, const mgf_feat_t *f, mgf_mrna_t *t)
+int32_t gf_mrna_gen(gf_qbuf_t *b, const gf_gff_t *gff, const gf_feat_t *f, gf_mrna_t *t)
 {
 	int32_t i, j, n_fs, n_exon, n_cds;
-	const mgf_feat_t **fs;
+	const gf_feat_t **fs;
 	const char *s;
 	kstring_t str = {0,0,0};
 
 	t->err = 0;
-	if (f == 0 || f->feat != MGF_FEAT_MRNA) return -1; // only looking at mRNA or transcript
-	fs = mgf_descend(b, f, &n_fs);
+	if (f == 0 || f->feat != GF_FEAT_MRNA) return -1; // only looking at mRNA or transcript
+	fs = gf_descend(b, f, &n_fs);
 	if (n_fs == 0) return -1; // not retrieved anything
 	for (i = 1; i < n_fs; ++i)
 		if (fs[i]->ctg != fs[0]->ctg)
 			break;
 	if (i < n_fs) {
-		if (mgf_verbose >= 2)
+		if (gf_verbose >= 2)
 			fprintf(stderr, "[W::%s] descendant features on different contigs\n", __func__);
 		return -2;
 	}
 
 	n_exon = n_cds = 0;
 	for (i = 0; i < n_fs; ++i) {
-		const mgf_feat_t *e = fs[i];
-		if (e->feat == MGF_FEAT_EXON) ++n_exon;
-		if (e->feat == MGF_FEAT_CDS) ++n_cds;
+		const gf_feat_t *e = fs[i];
+		if (e->feat == GF_FEAT_EXON) ++n_exon;
+		if (e->feat == GF_FEAT_CDS) ++n_cds;
 	}
 	if (n_exon > 0 && n_exon < n_cds) {
-		if (mgf_verbose >= 2)
+		if (gf_verbose >= 2)
 			fprintf(stderr, "[W::%s] more exons than CDS recards\n", __func__);
 		return -3;
 	}
 	t->n_exon = n_exon > n_cds? n_exon : n_cds;
 	t->has_cds = (n_cds > 0), t->frame = 0, t->has_start = 0, t->has_stop = 0;
 	if (t->n_exon == 0) { // TODO: this can be relaxed
-		if (mgf_verbose >= 2)
+		if (gf_verbose >= 2)
 			fprintf(stderr, "[W::%s] no exon associated with a transcript\n", __func__);
 		return -4;
 	}
 	if (t->n_exon > t->m_exon) {
 		t->m_exon = t->n_exon;
 		kroundup32(t->m_exon);
-		MGF_REALLOC(t->exon, t->m_exon);
+		GF_REALLOC(t->exon, t->m_exon);
 	}
 
 	if (t->has_cds) {
-		const mgf_feat_t *c0 = 0, *c1 = 0;
+		const gf_feat_t *c0 = 0, *c1 = 0;
 		for (i = 0; i < n_fs; ++i) {
-			if (fs[i]->feat == MGF_FEAT_START) t->has_start = 1;
-			if (fs[i]->feat == MGF_FEAT_STOP)  t->has_stop  = 1;
-			if (fs[i]->feat != MGF_FEAT_CDS) continue;
+			if (fs[i]->feat == GF_FEAT_START) t->has_start = 1;
+			if (fs[i]->feat == GF_FEAT_STOP)  t->has_stop  = 1;
+			if (fs[i]->feat != GF_FEAT_CDS) continue;
 			if (c0 == 0 || c1 == 0) c0 = c1 = fs[i];
 			if (fs[i]->st < c0->st) c0 = fs[i];
 			if (fs[i]->en > c1->en) c1 = fs[i];
@@ -171,44 +171,44 @@ int32_t mgf_mrna_gen(mgf_qbuf_t *b, const mgf_gff_t *gff, const mgf_feat_t *f, m
 	t->st_cds = INT64_MAX, t->en_cds = INT64_MIN;
 	t->strand = f->strand, t->ctg = f->ctg;
 	for (i = j = 0; i < n_fs; ++i) {
-		const mgf_feat_t *e = fs[i];
-		if (e->feat == MGF_FEAT_CDS) {
+		const gf_feat_t *e = fs[i];
+		if (e->feat == GF_FEAT_CDS) {
 			t->st_cds = t->st_cds < e->st? t->st_cds : e->st;
 			t->en_cds = t->en_cds > e->en? t->en_cds : e->en;
 		}
-		if (e->feat == MGF_FEAT_EXON || e->feat == MGF_FEAT_CDS) {
+		if (e->feat == GF_FEAT_EXON || e->feat == GF_FEAT_CDS) {
 			t->st = t->st < e->st? t->st : e->st;
 			t->en = t->en > e->en? t->en : e->en;
 		}
-		if (e->feat == MGF_FEAT_EXON || (e->feat == MGF_FEAT_CDS && n_exon == 0))
+		if (e->feat == GF_FEAT_EXON || (e->feat == GF_FEAT_CDS && n_exon == 0))
 			t->exon[j].st = e->st, t->exon[j++].en = e->en;
 	}
 	if (!t->has_cds) t->st_cds = t->st, t->en_cds = t->en;
 	assert(t->n_exon == n_exon);
 	if (t->n_exon > 1)
-		radix_sort_mgf_intv(t->exon, t->exon + t->n_exon);
+		radix_sort_gf_intv(t->exon, t->exon + t->n_exon);
 
 	// generate the name string
 	str.l = 0, str.m = t->m_name, str.s = t->name;
 	if (f->n_parent == 1) { // get the gene ID
-		const mgf_feat_t *g = f->parent[0];
-		if (g->id) mgf_sprintf_lite(&str, "%s:", g->id);
-		else mgf_sprintf_lite(&str, "%ld:", g->lineoff);
-		s = mgf_attr_find(gff, g, "Name");
-		if (s) mgf_sprintf_lite(&str, "%s:", s);
-		else mgf_sprintf_lite(&str, ":");
+		const gf_feat_t *g = f->parent[0];
+		if (g->id) gf_sprintf_lite(&str, "%s:", g->id);
+		else gf_sprintf_lite(&str, "%ld:", g->lineoff);
+		s = gf_attr_find(gff, g, "Name");
+		if (s) gf_sprintf_lite(&str, "%s:", s);
+		else gf_sprintf_lite(&str, ":");
 	}
-	if (f->id) mgf_sprintf_lite(&str, "%s:", f->id);
-	else mgf_sprintf_lite(&str, "%ld:", f->lineoff);
-	s = mgf_attr_find(gff, f, "transcript_type");
+	if (f->id) gf_sprintf_lite(&str, "%s:", f->id);
+	else gf_sprintf_lite(&str, "%ld:", f->lineoff);
+	s = gf_attr_find(gff, f, "transcript_type");
 	if (s == 0)
-		s = mgf_attr_find(gff, f, "transcript_biotype");
-	if (s) mgf_sprintf_lite(&str, "%s", s);
+		s = gf_attr_find(gff, f, "transcript_biotype");
+	if (s) gf_sprintf_lite(&str, "%s", s);
 	t->m_name = str.m, t->name = str.s;
 
-	if (t->has_cds) mgf_mrna_fix_cds(t);
+	if (t->has_cds) gf_mrna_fix_cds(t);
 
-	if ((t->st < f->st || t->en > f->en) && mgf_verbose >= 2)
+	if ((t->st < f->st || t->en > f->en) && gf_verbose >= 2)
 		fprintf(stderr, "[W::%s] exon coordinates beyond transcript coordinates at %s\n", __func__, t->name);
 	return 0;
 }
@@ -217,11 +217,11 @@ int32_t mgf_mrna_gen(mgf_qbuf_t *b, const mgf_gff_t *gff, const mgf_feat_t *f, m
  * Extract sequences *
  *********************/
 
-static char *mgf_codon_std = "KNKNTTTTRSRSIIMIQHQHPPPPRRRRLLLLEDEDAAAAGGGGVVVV*Y*YSSSS*CWCLFLFX";
+static char *gf_codon_std = "KNKNTTTTRSRSIIMIQHQHPPPPRRRRLLLLEDEDAAAAGGGGVVVV*Y*YSSSS*CWCLFLFX";
 					// 01234567890123456789012345678901234567890123456789012345678901234
 					// KKNNRRSSTTTTIMIIEEDDGGGGAAAAVVVVQQHHRRRRPPPPLLLL**YY*WCCSSSSLLFFX <- this is the AGCT order
 
-static unsigned char mgf_nt4_table[256] = {
+static unsigned char gf_nt4_table[256] = {
 	0, 1, 2, 3,  4, 4, 4, 4,  4, 4, 4, 4,  4, 4, 4, 4,
 	4, 4, 4, 4,  4, 4, 4, 4,  4, 4, 4, 4,  4, 4, 4, 4,
 	4, 4, 4, 4,  4, 4, 4, 4,  4, 4, 4, 4,  4, 4, 4, 4,
@@ -240,7 +240,7 @@ static unsigned char mgf_nt4_table[256] = {
 	4, 4, 4, 4,  4, 4, 4, 4,  4, 4, 4, 4,  4, 4, 4, 4
 };
 
-static char mgf_comp_tab[128] = {
+static char gf_comp_tab[128] = {
 	  0,   1,	2,	 3,	  4,   5,	6,	 7,	  8,   9,  10,	11,	 12,  13,  14,	15,
 	 16,  17,  18,	19,	 20,  21,  22,	23,	 24,  25,  26,	27,	 28,  29,  30,	31,
 	 32,  33,  34,	35,	 36,  37,  38,	39,	 40,  41,  42,	43,	 44,  45,  46,	47,
@@ -251,29 +251,29 @@ static char mgf_comp_tab[128] = {
 	'p', 'q', 'y', 's', 'a', 'a', 'b', 'w', 'x', 'r', 'z', 123, 124, 125, 126, 127
 };
 
-static void mgf_revcomp(int32_t len, char *seq)
+static void gf_revcomp(int32_t len, char *seq)
 {
 	int32_t i;
 	for (i = 0; i < len>>1; ++i) {
 		uint8_t t = seq[len - 1 - i];
-		seq[len - 1 - i] = (uint8_t)seq[i] >= 128? seq[i] : mgf_comp_tab[(uint8_t)seq[i]];
-		seq[i] = t >= 128? t : mgf_comp_tab[t];
+		seq[len - 1 - i] = (uint8_t)seq[i] >= 128? seq[i] : gf_comp_tab[(uint8_t)seq[i]];
+		seq[i] = t >= 128? t : gf_comp_tab[t];
 	}
-	if (len&1) seq[i] = (uint8_t)seq[i] >= 128? seq[i] : mgf_comp_tab[(uint8_t)seq[i]];
+	if (len&1) seq[i] = (uint8_t)seq[i] >= 128? seq[i] : gf_comp_tab[(uint8_t)seq[i]];
 }
 
-int32_t mgf_extract_seq(const mgf_gff_t *gff, const mgf_seqs_t *seq, const mgf_mrna_t *t, int32_t fmt, char **str_, int32_t *cap_)
+int32_t gf_extract_seq(const gf_gff_t *gff, const gf_seqs_t *seq, const gf_mrna_t *t, int32_t fmt, char **str_, int32_t *cap_)
 {
 	int32_t j, len = 0, cap = *cap_, seq_id;
 	char *str = *str_;
-	if ((fmt == MGF_FMT_FA_CDS || fmt == MGF_FMT_FA_PROTEIN) && t->has_cds == 0) return -1; // no CDS
-	seq_id = mgf_id_get(seq->h, t->ctg);
+	if ((fmt == GF_FMT_FA_CDS || fmt == GF_FMT_FA_PROTEIN) && t->has_cds == 0) return -1; // no CDS
+	seq_id = gf_id_get(seq->h, t->ctg);
 	if (seq_id < 0) return -1; // contig name not found; TODO: add a warning
 	if (t->en > seq->len[seq_id]) return -1; // beyond the end of ctg
-	if (fmt == MGF_FMT_FA_MRNA) {
+	if (fmt == GF_FMT_FA_MRNA) {
 		for (j = 0, len = 0; j < t->n_exon; ++j)
 			len += t->exon[j].en - t->exon[j].st;
-	} else if (fmt == MGF_FMT_FA_CDS || fmt == MGF_FMT_FA_PROTEIN) {
+	} else if (fmt == GF_FMT_FA_CDS || fmt == GF_FMT_FA_PROTEIN) {
 		for (j = 0, len = 0; j < t->n_exon; ++j) {
 			int64_t st, en;
 			st = t->exon[j].st > t->st_cds? t->exon[j].st : t->st_cds;
@@ -282,18 +282,18 @@ int32_t mgf_extract_seq(const mgf_gff_t *gff, const mgf_seqs_t *seq, const mgf_m
 			len += en - st;
 		}
 	} else abort();
-	assert(fmt != MGF_FMT_FA_PROTEIN || len % 3 == 0);
+	assert(fmt != GF_FMT_FA_PROTEIN || len % 3 == 0);
 	if (len + 1 > cap) {
 		cap = len + 1;
 		kroundup32(cap);
-		MGF_REALLOC(str, cap);
+		GF_REALLOC(str, cap);
 	}
-	if (fmt == MGF_FMT_FA_MRNA) {
+	if (fmt == GF_FMT_FA_MRNA) {
 		for (j = 0, len = 0; j < t->n_exon; ++j) {
 			memcpy(&str[len], &seq->seq[seq_id][t->exon[j].st], t->exon[j].en - t->exon[j].st);
 			len += t->exon[j].en - t->exon[j].st;
 		}
-	} else if (fmt == MGF_FMT_FA_CDS || fmt == MGF_FMT_FA_PROTEIN) {
+	} else if (fmt == GF_FMT_FA_CDS || fmt == GF_FMT_FA_PROTEIN) {
 		for (j = 0, len = 0; j < t->n_exon; ++j) {
 			int64_t st, en;
 			st = t->exon[j].st > t->st_cds? t->exon[j].st : t->st_cds;
@@ -303,14 +303,14 @@ int32_t mgf_extract_seq(const mgf_gff_t *gff, const mgf_seqs_t *seq, const mgf_m
 			len += en - st;
 		}
 	}
-	if (t->strand < 0) mgf_revcomp(len, str);
-	if (fmt == MGF_FMT_FA_PROTEIN) {
+	if (t->strand < 0) gf_revcomp(len, str);
+	if (fmt == GF_FMT_FA_PROTEIN) {
 		int32_t j, k;
 		for (j = 0, k = 0; j + 2 < len; j += 3) {
-			int32_t c0 = mgf_nt4_table[(uint8_t)str[j]];
-			int32_t c1 = mgf_nt4_table[(uint8_t)str[j+1]];
-			int32_t c2 = mgf_nt4_table[(uint8_t)str[j+2]];
-			str[k++] = c0>3 || c1>3 || c2>3? 'X' : mgf_codon_std[c0<<4|c1<<2|c2];
+			int32_t c0 = gf_nt4_table[(uint8_t)str[j]];
+			int32_t c1 = gf_nt4_table[(uint8_t)str[j+1]];
+			int32_t c2 = gf_nt4_table[(uint8_t)str[j+2]];
+			str[k++] = c0>3 || c1>3 || c2>3? 'X' : gf_codon_std[c0<<4|c1<<2|c2];
 		}
 		len = k;
 	}
