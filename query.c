@@ -194,7 +194,7 @@ int32_t gf_mrna_gen(gf_qbuf_t *b, const gf_gff_t *gff, const gf_feat_t *f, gf_mr
 		const gf_feat_t *g = f->parent[0];
 		if (g->id) gf_sprintf_lite(&str, "%s:", g->id);
 		else gf_sprintf_lite(&str, "%ld:", g->lineoff);
-		if (f->name) gf_sprintf_lite(&str, "%s", f->name);
+		if (g->name) gf_sprintf_lite(&str, "%s", g->name);
 		gf_sprintf_lite(&str, ":");
 	}
 	if (f->id) gf_sprintf_lite(&str, "%s:", f->id);
