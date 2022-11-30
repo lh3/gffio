@@ -103,16 +103,18 @@ void write_feat(kstring_t *str, const gf_gff_t *gff, const gf_feat_t *f, int32_t
 	gf_sprintf_lite(str, "\t%c", f->strand < 0? '-' : f->strand > 0? '+' : '.');
 	if (f->frame < 0) gf_sprintf_lite(str, "\t.\t");
 	else gf_sprintf_lite(str, "\t%d\t", f->frame);
-	if (f->n_attr == 0) gf_sprintf_lite(str, ".");
 	if (fmt == GF_FMT_GFF3) {
+		int32_t l0 = str->l;
 		if (!f->has_id && f->id) gf_sprintf_lite(str, "ID=%s;", f->id);
 		if (!f->has_parent && f->parent1) gf_sprintf_lite(str, "Parent=%s;", f->parent1);
 		if (!f->has_name && f->name) gf_sprintf_lite(str, "Name=%s;", f->name);
+		if (str->l == l0 && f->n_attr == 0) gf_sprintf_lite(str, ".");
 		for (i = 0; i < f->n_attr; ++i) {
 			gf_sprintf_lite(str, "%s=%s", f->attr[i].key, f->attr[i].val);
 			if (i != f->n_attr - 1) gf_sprintf_lite(str, ";");
 		}
 	} else if (fmt == GF_FMT_GTF) {
+		if (f->n_attr == 0) gf_sprintf_lite(str, ".");
 		for (i = 0; i < f->n_attr; ++i) {
 			gf_sprintf_lite(str, "%s \"%s\";", f->attr[i].key, f->attr[i].val);
 			if (i != f->n_attr - 1) gf_sprintf_lite(str, " ");
