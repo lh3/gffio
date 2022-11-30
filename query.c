@@ -200,7 +200,7 @@ int32_t gf_mrna_gen(gf_qbuf_t *b, const gf_gff_t *gff, const gf_feat_t *f, gf_mr
 	}
 	if (f->id) gf_sprintf_lite(&str, "%s:", f->id);
 	else gf_sprintf_lite(&str, "%ld:", f->lineoff);
-	if (f->biotype) gf_sprintf_lite(&str, "%s", s);
+	if (f->biotype) gf_sprintf_lite(&str, "%s", f->biotype);
 	t->m_name = str.m, t->name = str.s;
 
 	if (t->has_cds) gf_mrna_fix_cds(t);
