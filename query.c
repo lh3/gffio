@@ -42,6 +42,7 @@ const gf_feat_t **gf_descend(gf_qbuf_t *b, const gf_feat_t *f, int32_t *n)
 	GF_PUSH_BACK(b->ns, b->ms, b->stack, f);
 	while (b->ns > 0) {
 		f = b->stack[--b->ns];
+		b->flag[f - b->gff->feat] = 1;
 		GF_PUSH_BACK(b->nf, b->mf, b->rst, f);
 		for (i = f->n_child - 1; i >= 0; --i) {
 			const gf_feat_t *g = f->child[i];

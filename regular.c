@@ -112,7 +112,7 @@ void gf_label(gf_gff_t *gff)
 			f->feat = GF_FEAT_MRNA;
 			if (!f->id) f->id = gf_attr_find_s(gff, f, s_tid);
 			if (!f->name) f->name = gf_attr_find_s(gff, f, s_tname);
-			if (!f->parent1) f->parent1 = gf_attr_find_s(gff, f, s_tid);
+			if (!f->parent1) f->parent1 = gf_attr_find_s(gff, f, s_gid);
 			if (!f->biotype) f->biotype = gf_attr_find_s(gff, f, s_tt);
 			if (!f->biotype) f->biotype = gf_attr_find_s(gff, f, s_tbt);
 		} else if (f->feat_ori == s_exon) {
