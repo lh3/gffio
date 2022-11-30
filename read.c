@@ -36,7 +36,7 @@ static void gf_parse_attr(gf_gff_t *g, gf_feat_t *f, char *str)
 
 static void gf_parse_feat(gf_gff_t *gff, char *str, int64_t lineoff)
 {
-	int32_t i;
+	int32_t i, tmp;
 	char *p, *q;
 	gf_feat_t *f;
 	if (gff->n_feat == gff->m_feat) {
@@ -66,7 +66,8 @@ static void gf_parse_feat(gf_gff_t *gff, char *str, int64_t lineoff)
 			} else if (i == 6) { // strand
 				f->strand = *q == '+'? 1 : *q == '-'? -1 : 0;
 			} else if (i == 7) { // frame
-				f->frame = *q >= '0' && *q <= '9'? atoi(q) : -1;
+				tmp = *q >= '0' && *q <= '9'? atoi(q) : -1;
+				f->frame = tmp < 0? -1 : tmp % 3;
 			} else if (i == 8) { // attributes
 				gf_parse_attr(gff, f, q);
 			}

@@ -29,14 +29,15 @@ typedef struct {
 
 typedef struct gf_feat_s {
 	int32_t feat;
-	int32_t strand:16, frame:16;
+	int32_t strand:16, frame:10, has_id:2, has_parent:2, has_name:2;
 	int32_t n_child, n_parent;
 	int32_t n_attr, m_attr;
 	int64_t st, en;
 	double score; 
 	int64_t lineoff;
-	const char *ctg, *src, *feat_ori, *id;
+	const char *ctg, *src, *feat_ori;
 	gf_attr_t *attr;
+	const char *id, *parent1, *name, *biotype;
 	struct gf_feat_s **parent, **child;
 } gf_feat_t;
 

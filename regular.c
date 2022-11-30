@@ -29,32 +29,13 @@ const char *gf_attr_find(const gf_gff_t *g, const gf_feat_t *f, const char *key)
 	return 0;
 }
 
-static void gf_add_id_name(gf_gff_t *gff, gf_feat_t *f, const char *s_id, const char *s_xid, const char *id_name, const char *id_xkey)
+static const char *gf_attr_find_s(const gf_gff_t *gff, const gf_feat_t *f, const char *s_key)
 {
-	int32_t j, j_id = -1, j_xid = -1;
-	for (j = 0; j < f->n_attr; ++j) {
-		if (f->attr[j].key == s_id) j_id = j;
-		else if (f->attr[j].key == s_xid) j_xid = j;
-	}
-	if (j_id >= 0 && j_xid < 0)
-		gf_attr_append(gff, f, id_xkey, f->attr[j_id].val);
-	else if (j_xid >= 0 && j_id < 0)
-		gf_attr_append(gff, f, id_name, f->attr[j_xid].val);
-	else if (j_xid < 0 && j_id < 0) {
-		if (gf_verbose >= 2)
-			fprintf(stderr, "WARNING: missing ID for '%s %ld %ld'\n", f->ctg, (long)f->st+1, (long)f->en);
-	}
-}
-
-static void gf_add_parent(gf_gff_t *gff, gf_feat_t *f, const char *s_xid, const char *s_par)
-{
-	int32_t j, j_xid = -1, j_par = -1;
-	for (j = 0; j < f->n_attr; ++j) {
-		if (f->attr[j].key == s_par) j_par = j;
-		else if (f->attr[j].key == s_xid) j_xid = j;
-	}
-	if (j_par >= 0 || j_xid < 0) return;
-	gf_attr_append(gff, f, "Parent", f->attr[j_xid].val);
+	int32_t j;
+	for (j = 0; j < f->n_attr; ++j)
+		if (f->attr[j].key == s_key)
+			return f->attr[j].val;
+	return 0;
 }
 
 static void gf_check_id(const gf_gff_t *gff)
@@ -90,47 +71,63 @@ void gf_label(gf_gff_t *gff)
 	int32_t i;
 	const char *s_gene, *s_trans, *s_mrna, *s_exon, *s_cds, *s_start, *s_stop;
 	const char *s_id, *s_par, *s_name, *s_gid, *s_tid, *s_gname, *s_tname;
+	const char *s_bt, *s_tbt, *s_tt, *s_gbt, *s_gt;
 
-	s_gene  = gf_dict_get(gff->dict, "gene");
-	s_trans = gf_dict_get(gff->dict, "transcript");
-	s_mrna  = gf_dict_get(gff->dict, "mRNA");
-	s_exon  = gf_dict_get(gff->dict, "exon");
-	s_cds   = gf_dict_get(gff->dict, "CDS");
-	s_start = gf_dict_get(gff->dict, "start_codon");
-	s_stop  = gf_dict_get(gff->dict, "stop_codon");
-	s_id    = gf_dict_get(gff->dict, "ID");
-	s_par   = gf_dict_get(gff->dict, "Parent");
-	s_name  = gf_dict_get(gff->dict, "Name");
-	s_gid   = gf_dict_get(gff->dict, "gene_id");
-	s_tid   = gf_dict_get(gff->dict, "transcript_id");
-	s_gname = gf_dict_get(gff->dict, "gene_name");
-	s_tname = gf_dict_get(gff->dict, "transcript_name");
+	s_gene  = gf_dict_put(gff->dict, "gene");
+	s_trans = gf_dict_put(gff->dict, "transcript");
+	s_mrna  = gf_dict_put(gff->dict, "mRNA");
+	s_exon  = gf_dict_put(gff->dict, "exon");
+	s_cds   = gf_dict_put(gff->dict, "CDS");
+	s_start = gf_dict_put(gff->dict, "start_codon");
+	s_stop  = gf_dict_put(gff->dict, "stop_codon");
+	s_id    = gf_dict_put(gff->dict, "ID");
+	s_par   = gf_dict_put(gff->dict, "Parent");
+	s_name  = gf_dict_put(gff->dict, "Name");
+	s_gid   = gf_dict_put(gff->dict, "gene_id");
+	s_tid   = gf_dict_put(gff->dict, "transcript_id");
+	s_gname = gf_dict_put(gff->dict, "gene_name");
+	s_tname = gf_dict_put(gff->dict, "transcript_name");
+	s_bt    = gf_dict_put(gff->dict, "biotype");
+	s_gt    = gf_dict_put(gff->dict, "gene_type");
+	s_gbt   = gf_dict_put(gff->dict, "gene_biotype");
+	s_tt    = gf_dict_put(gff->dict, "transcript_type");
+	s_tbt   = gf_dict_put(gff->dict, "transcript_biotype");
 
 	for (i = 0; i < gff->n_feat; ++i) {
 		gf_feat_t *f = &gff->feat[i];
+		f->id = gf_attr_find_s(gff, f, s_id);
+		f->name = gf_attr_find_s(gff, f, s_name);
+		f->parent1 = gf_attr_find_s(gff, f, s_par);
+		f->biotype = gf_attr_find_s(gff, f, s_bt);
+		f->has_id = (f->id != 0);
+		f->has_name = (f->name != 0);
+		f->has_parent = (f->parent1 != 0);
 		if (f->feat_ori == s_gene) {
 			f->feat = GF_FEAT_GENE;
-			gf_add_id_name(gff, f, s_id, s_gid, "ID", "gene_id");
-			gf_add_id_name(gff, f, s_name, s_gname, "Name", "gene_name");
+			if (!f->id) f->id = gf_attr_find_s(gff, f, s_gid);
+			if (!f->name) f->name = gf_attr_find_s(gff, f, s_gname);
+			if (!f->biotype) f->biotype = gf_attr_find_s(gff, f, s_gt);
+			if (!f->biotype) f->biotype = gf_attr_find_s(gff, f, s_gbt);
 		} else if (f->feat_ori == s_trans || f->feat_ori == s_mrna) {
 			f->feat = GF_FEAT_MRNA;
-			gf_add_id_name(gff, f, s_id, s_tid, "ID", "transcript_id");
-			gf_add_id_name(gff, f, s_name, s_tname, "Name", "transcript_name");
-			gf_add_parent(gff, f, s_gid, s_par);
+			if (!f->id) f->id = gf_attr_find_s(gff, f, s_tid);
+			if (!f->name) f->name = gf_attr_find_s(gff, f, s_tname);
+			if (!f->parent1) f->parent1 = gf_attr_find_s(gff, f, s_tid);
+			if (!f->biotype) f->biotype = gf_attr_find_s(gff, f, s_tt);
+			if (!f->biotype) f->biotype = gf_attr_find_s(gff, f, s_tbt);
 		} else if (f->feat_ori == s_exon) {
 			f->feat = GF_FEAT_EXON;
-			gf_add_parent(gff, f, s_tid, s_par);
+			if (!f->parent1) f->parent1 = gf_attr_find_s(gff, f, s_tid);
 		} else if (f->feat_ori == s_cds) {
 			f->feat = GF_FEAT_CDS;
-			gf_add_parent(gff, f, s_tid, s_par);
+			if (!f->parent1) f->parent1 = gf_attr_find_s(gff, f, s_tid);
 		} else if (f->feat_ori == s_start) {
 			f->feat = GF_FEAT_START;
-			gf_add_parent(gff, f, s_tid, s_par);
+			if (!f->parent1) f->parent1 = gf_attr_find_s(gff, f, s_tid);
 		} else if (f->feat_ori == s_stop) {
 			f->feat = GF_FEAT_STOP;
-			gf_add_parent(gff, f, s_tid, s_par);
+			if (!f->parent1) f->parent1 = gf_attr_find_s(gff, f, s_tid);
 		}
-		f->id = gf_attr_find(gff, f, "ID");
 	}
 	gf_check_id(gff);
 	gf_build_id_dict(gff);
@@ -139,16 +136,13 @@ void gf_label(gf_gff_t *gff)
 void gf_connect(gf_gff_t *gff)
 {
 	int32_t i, k;
-	const char *s_par = 0, *par;
-	s_par = gf_dict_get(gff->dict, "Parent");
-	if (s_par == 0) return;
 	for (i = 0; i < gff->n_feat; ++i) {
 		gf_feat_t *f = &gff->feat[i];
 		f->n_child = f->n_parent = 0;
 	}
 	for (i = 0; i < gff->n_feat; ++i) { // count children
 		gf_feat_t *f = &gff->feat[i];
-		par = gf_attr_find(gff, f, "Parent");
+		const char *par = f->parent1;
 		if (par) {
 			k = gf_id_get(gff->dict_id, par);
 			if (k >= 0) { // TODO: support multiple parents (low priority)
@@ -168,7 +162,7 @@ void gf_connect(gf_gff_t *gff)
 	}
 	for (i = 0; i < gff->n_feat; ++i) { // population ::child and ::parent
 		gf_feat_t *f = &gff->feat[i];
-		par = gf_attr_find(gff, f, "Parent");
+		const char *par = f->parent1;
 		if (par) {
 			k = gf_id_get(gff->dict_id, par);
 			if (k >= 0) { // TODO: support multiple parents (low priority)
