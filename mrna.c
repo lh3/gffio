@@ -314,3 +314,59 @@ int32_t gf_extract_seq(const gf_gff_t *gff, const gf_seqs_t *seq, const gf_mrna_
 	*str_ = str, *cap_ = cap;
 	return len;
 }
+
+/*****************************
+ * Select longest transcript *
+ *****************************/
+
+void gf_mrna_choose_long(gf_gff_t *gff)
+{
+	int8_t *flag;
+	int64_t i;
+	gf_qbuf_t *b;
+	gf_mrna_t t;
+
+	if (gff->feat_view) free(gff->feat_view);
+	gff->n_feat_view = 0, gff->feat_view = 0;
+	GF_CALLOC(flag, gff->n_feat);
+	b = gf_qbuf_init(gff);
+	gf_mrna_init(&t);
+	for (i = 0; i < gff->n_feat; ++i) {
+		int32_t j, max_cds = 0, max_cds_j = -1, max_exon = 0, max_exon_j = -1;
+		const gf_feat_t *f = &gff->feat[i];
+		if (f->feat != GF_FEAT_GENE || f->n_child == 0) continue;
+		for (j = 0; j < f->n_child; ++j) {
+			const gf_feat_t *h = f->child[j];
+			int32_t k, cds_len = 0, exon_len = 0;
+			if (h->feat != GF_FEAT_MRNA || h->n_child == 0) continue;
+			gf_mrna_gen(b, gff, h, &t);
+			for (k = 0; k < t.n_exon; ++k) {
+				int64_t st, en;
+				const gf_intv_t *e = &t.exon[k];
+				exon_len += e->en - e->st;
+				st = e->st > t.st_cds? e->st : t.st_cds;
+				en = e->en < t.en_cds? e->en : t.en_cds;
+				if (st >= en) continue;
+				cds_len += en - st;
+			}
+			if (exon_len > max_exon) max_exon = exon_len, max_exon_j = j;
+			if (cds_len > max_cds) max_cds = cds_len, max_cds_j = j;
+		}
+		if (max_cds > 0 || max_exon > 0) {
+			int32_t n_sub, max_j = max_cds > 0? max_cds_j : max_exon_j;
+			const gf_feat_t **sub;
+			flag[i] = 1;
+			sub = gf_descend(b, f->child[max_j], &n_sub);
+			for (j = 0; j < n_sub; ++j)
+				flag[sub[j] - gff->feat] = 1;
+		}
+	}
+	gf_mrna_free(&t);
+	gf_qbuf_destroy(b);
+	for (i = 0; i < gff->n_feat; ++i)
+		if (flag[i]) ++gff->n_feat_view;
+	GF_CALLOC(gff->feat_view, gff->n_feat_view);
+	for (i = 0, gff->n_feat_view = 0; i < gff->n_feat; ++i)
+		if (flag[i]) gff->feat_view[gff->n_feat_view] = &gff->feat[i];
+	free(flag);
+}

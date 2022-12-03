@@ -103,6 +103,7 @@ gf_qbuf_t *gf_qbuf_init(const gf_gff_t *gff);
 void gf_qbuf_destroy(gf_qbuf_t *b);
 const gf_feat_t **gf_descend(gf_qbuf_t *b, const gf_feat_t *f, int32_t *n);
 int32_t gf_extract_seq(const gf_gff_t *gff, const gf_seqs_t *seq, const gf_mrna_t *t, int32_t fmt, char **str_, int32_t *cap_);
+void gf_mrna_choose_long(gf_gff_t *gff);
 
 char **gf_read_list(const char *o, int *n_);
 
