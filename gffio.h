@@ -50,7 +50,7 @@ struct gf_dict_s;
 typedef struct gf_dict_s gf_dict_t;
 
 typedef struct {
-	int64_t n_feat, m_feat;
+	int64_t n_feat, m_feat, n_feat_view;
 	int64_t n_comm, m_comm;
 	gf_feat_t *feat;
 	const gf_feat_t **feat_view;

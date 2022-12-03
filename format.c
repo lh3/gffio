@@ -133,10 +133,11 @@ void gf_write_feat(char **str, int32_t *len, int32_t *cap, const gf_gff_t *gff, 
 
 void gf_write_gff_stream(FILE *fp, const gf_gff_t *gff, int32_t fmt)
 {
+	int64_t n_view = gff->n_feat_view > 0? gff->n_feat_view : gff->n_feat;
 	int32_t i;
 	kstring_t str = {0,0,0};
 	gf_write_gff_comment(fp, gff, &str);
-	for (i = 0; i < gff->n_feat; ++i) {
+	for (i = 0; i < n_view; ++i) {
 		str.l = 0;
 		write_feat(&str, gff, gff->feat_view? gff->feat_view[i] : &gff->feat[i], fmt);
 		fwrite(str.s, 1, str.l, fp);

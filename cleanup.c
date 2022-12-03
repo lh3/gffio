@@ -214,4 +214,5 @@ const gf_feat_t **gf_toposort(const gf_gff_t *gff)
 void gf_group(gf_gff_t *gff)
 {
 	gff->feat_view = gf_toposort(gff);
+	gff->n_feat_view = gff->n_feat;
 }
