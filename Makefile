@@ -4,7 +4,7 @@ CFLAGS=		-std=c99 -g -Wall -O3
 CXXFLAGS=	$(CFLAGS)
 CPPFLAGS=
 INCLUDES=
-OBJS=		kagraph.o dict.o regular.o query.o read.o format.o
+OBJS=		kagraph.o dict.o cleanup.o mrna.o read.o format.o
 PROG=		gffio
 LIBS=		-lz -lm
 
@@ -35,9 +35,10 @@ depend:
 
 # DO NOT DELETE
 
+cleanup.o: gfpriv.h gffio.h kagraph.h
 dict.o: gfpriv.h gffio.h khashl.h
+format.o: gfpriv.h gffio.h
 kagraph.o: kagraph.h
 main.o: gffio.h ketopt.h
-query.o: ksort.h
-read.o: kseq.h
-regular.o: gfpriv.h gffio.h kagraph.h
+mrna.o: gfpriv.h gffio.h ksort.h
+read.o: gfpriv.h gffio.h kseq.h
