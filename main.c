@@ -107,6 +107,7 @@ static int usage(FILE *fp)
 	fprintf(fp, "  view      read GFF3/GTF\n");
 	fprintf(fp, "  gff2bed   convert GFF3/GTF to BED\n");
 	fprintf(fp, "  gff2fa    extract sequences\n");
+	fprintf(fp, "  version   print version number\n");
 	return 1;
 }
 
@@ -116,7 +117,10 @@ int main(int argc, char *argv[])
 	if (strcmp(argv[1], "view") == 0) return main_view(argc-1, argv+1);
 	else if (strcmp(argv[1], "gff2bed") == 0) return main_gff2bed(argc-1, argv+1);
 	else if (strcmp(argv[1], "gff2fa") == 0) return main_gff2fa(argc-1, argv+1);
-	else {
+	else if (strcmp(argv[1], "version") == 0) {
+		puts(GF_VERSION);
+		return 0;
+	} else {
 		fprintf(stderr, "ERROR: unrecognized command '%s'\n", argv[1]);
 		return 1;
 	}

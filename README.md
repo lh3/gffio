@@ -22,7 +22,7 @@ gffio gff2fa -c hg38.fa test/hs38-gc42-part.gtf.gz > out.fa # extract CDS
 
 gffio is a software tool to process GFF3 and GTF files. It can convert between
 GFF3 and GTF, generate 12-column BED, extract CDS/transcript/protein sequences,
-reorder features and select the longest CDS/transcript. Most gffio features are
+reorder features and select the longest CDS/transcript. Many gffio features are
 also available in [gffread][gffread]. I implemented gffio mainly for a few use
 cases I needed for my work.
 

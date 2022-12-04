@@ -1,6 +1,8 @@
 #ifndef GFFIO_H
 #define GFFIO_H
 
+#define GF_VERSION "0.0-r47"
+
 #include <stdint.h>
 
 #define GF_FEAT_NONE      0
