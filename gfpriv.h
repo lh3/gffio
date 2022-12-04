@@ -55,8 +55,6 @@ const char *gf_attr_find(const gf_gff_t *g, const gf_feat_t *f, const char *key)
 void gf_label(gf_gff_t *gff);
 void gf_connect(gf_gff_t *gff);
 
-const gf_feat_t **gf_toposort(const gf_gff_t *gff);;
-
 void gf_mrna_init(gf_mrna_t *t);
 int32_t gf_mrna_gen(gf_qbuf_t *b, const gf_gff_t *gff, const gf_feat_t *f, gf_mrna_t *t);
 void gf_mrna_free(gf_mrna_t *t);

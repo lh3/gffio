@@ -8,24 +8,28 @@ int main_view(int argc, char *argv[])
 {
 	gf_gff_t *gff;
 	ketopt_t o = KETOPT_INIT;
-	int32_t c, to_group = 0, fmt = GF_FMT_GFF3;
+	int32_t c, to_group = 0, fmt = GF_FMT_GFF3, sel_long = 0;
 	char *id_list = 0;
-	while ((c = ketopt(&o, argc, argv, 1, "gv:l:t", 0)) >= 0) {
+	while ((c = ketopt(&o, argc, argv, 1, "gv:l:tL", 0)) >= 0) {
 		if (c == 'v') gf_verbose = atoi(o.arg);
 		else if (c == 'g') to_group = 1;
 		else if (c == 'l') id_list = o.arg;
 		else if (c == 't') fmt = GF_FMT_GTF;
+		else if (c == 'L') sel_long = 1;
 	}
 	if (o.ind == argc) {
 		fprintf(stderr, "Usage: gffio view [options] <in.gff>\n");
 		fprintf(stderr, "Options:\n");
 		fprintf(stderr, "  -t        output GTF\n");
 		fprintf(stderr, "  -g        group by hierarchy\n");
+		fprintf(stderr, "  -L        choose the longest CDS/tanscript\n");
 		fprintf(stderr, "  -l STR    extract records descended from ID list []\n");
 		fprintf(stderr, "  -v INT    verbose level [%d]\n", gf_verbose);
 		return 1;
 	}
 	gff = gf_read(argv[o.ind]);
+	if (to_group) gf_group(gff);
+	if (sel_long) gf_mrna_choose_long(gff);
 
 	if (id_list) {
 		int32_t n;
@@ -33,7 +37,6 @@ int main_view(int argc, char *argv[])
 		list = gf_read_list(id_list, &n);
 		gf_write_list(0, gff, fmt, n, list);
 	} else {
-		if (to_group) gf_group(gff);
 		gf_write(0, gff, fmt);
 	}
 

@@ -367,6 +367,6 @@ void gf_mrna_choose_long(gf_gff_t *gff)
 		if (flag[i]) ++gff->n_feat_view;
 	GF_CALLOC(gff->feat_view, gff->n_feat_view);
 	for (i = 0, gff->n_feat_view = 0; i < gff->n_feat; ++i)
-		if (flag[i]) gff->feat_view[gff->n_feat_view] = &gff->feat[i];
+		if (flag[i]) gff->feat_view[gff->n_feat_view++] = &gff->feat[i];
 	free(flag);
 }

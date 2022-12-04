@@ -138,6 +138,7 @@ void gf_connect(gf_gff_t *gff)
 	int32_t i, k;
 	for (i = 0; i < gff->n_feat; ++i) {
 		gf_feat_t *f = &gff->feat[i];
+		free(f->parent);
 		f->n_child = f->n_parent = 0;
 	}
 	for (i = 0; i < gff->n_feat; ++i) { // count children
@@ -195,12 +196,12 @@ static kag_gfor_t *gf_gff2tj(const gf_gff_t *gff)
 	return g;
 }
 
-const gf_feat_t **gf_toposort(const gf_gff_t *gff)
+gf_feat_t **gf_toposort(const gf_gff_t *gff)
 {
 	uint32_t v;
 	uint64_t *b;
 	kag_gfor_t *g;
-	const gf_feat_t **a;
+	gf_feat_t **a;
 	g = gf_gff2tj(gff);
 	b = kag_scc_tarjan(g);
 	GF_CALLOC(a, gff->n_feat);
@@ -213,6 +214,14 @@ const gf_feat_t **gf_toposort(const gf_gff_t *gff)
 
 void gf_group(gf_gff_t *gff)
 {
-	gff->feat_view = gf_toposort(gff);
-	gff->n_feat_view = gff->n_feat;
+	int64_t i;
+	gf_feat_t **feat, *new_feat;
+	feat = gf_toposort(gff);
+	GF_CALLOC(new_feat, gff->n_feat);
+	for (i = 0; i < gff->n_feat; ++i)
+		new_feat[i] = gff->feat[feat[i] - gff->feat];
+	free(feat);
+	free(gff->feat);
+	gff->feat = new_feat;
+	gf_connect(gff);
 }
