@@ -52,6 +52,7 @@ static void gf_check_id(const gf_gff_t *gff)
 static void gf_build_id_dict(gf_gff_t *gff)
 {
 	int32_t i, t, n_dup = 0;
+	if (gff->dict_id) gf_id_destroy(gff->dict_id);
 	gff->dict_id = gf_id_init();
 	for (i = 0; i < gff->n_feat; ++i) {
 		gf_feat_t *f = &gff->feat[i];
@@ -223,5 +224,6 @@ void gf_group(gf_gff_t *gff)
 	free(feat);
 	free(gff->feat);
 	gff->feat = new_feat;
+	gf_build_id_dict(gff);
 	gf_connect(gff);
 }
