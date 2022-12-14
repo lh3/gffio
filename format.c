@@ -166,10 +166,10 @@ void gf_write_bed12_stream(FILE *fp, const gf_gff_t *gff, int32_t fmt)
 		gf_sprintf_lite(&str, "\t0\t%c\t", t.strand < 0? '-' : t.strand > 0? '+' : '.');
 		gf_sprintf_lite(&str, "%ld\t%ld\t0,0,0\t%d\t", t.st_cds, t.en_cds, t.n_exon);
 		for (j = 0; j < t.n_exon; ++j)
-			gf_sprintf_lite(&str, "%ld,", t.exon[j].st);
+			gf_sprintf_lite(&str, "%ld,", t.exon[j].en - t.exon[j].st);
 		gf_sprintf_lite(&str, "\t");
 		for (j = 0; j < t.n_exon; ++j)
-			gf_sprintf_lite(&str, "%ld,", t.exon[j].en - t.exon[j].st);
+			gf_sprintf_lite(&str, "%ld,", t.exon[j].st - t.st);
 		gf_sprintf_lite(&str, "\n");
 		fwrite(str.s, 1, str.l, fp);
 	}
