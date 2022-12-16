@@ -349,6 +349,7 @@ void gf_mrna_choose_long(gf_gff_t *gff)
 				if (st >= en) continue;
 				cds_len += en - st;
 			}
+			if (!t.has_cds) cds_len = 0;
 			if (exon_len > max_exon) max_exon = exon_len, max_exon_j = j;
 			if (cds_len > max_cds) max_cds = cds_len, max_cds_j = j;
 		}
